@@ -8,9 +8,11 @@ import com.acmafer.modulos.notificaciones.repositorio.NotificacionRepository;
 import com.acmafer.modulos.tareas.dto.TareaDTO;
 import com.acmafer.modulos.tareas.entidad.AsignacionTarea;
 import com.acmafer.modulos.tareas.entidad.ComentarioTarea;
+import com.acmafer.modulos.tareas.entidad.HistorialTarea;
 import com.acmafer.modulos.tareas.entidad.Tarea;
 import com.acmafer.modulos.tareas.repositorio.AsignacionTareaRepository;
 import com.acmafer.modulos.tareas.repositorio.ComentarioTareaRepository;
+import com.acmafer.modulos.tareas.repositorio.HistorialTareaRepository;
 import com.acmafer.modulos.tareas.repositorio.TareaRepository;
 import com.acmafer.modulos.usuarios.entidad.Rol;
 import com.acmafer.modulos.usuarios.entidad.Usuario;
@@ -29,6 +31,7 @@ public class TareaService {
     private final TareaRepository tareaRepo;
     private final AsignacionTareaRepository asignacionRepo;
     private final ComentarioTareaRepository comentarioRepo;
+    private final HistorialTareaRepository historialRepo;
     private final NotificacionRepository notifRepo;
     private final UsuarioRepository usuarioRepo;
     private final EmailService emailService;
@@ -42,6 +45,9 @@ public class TareaService {
             .fechaVencimiento(dto.getFechaVencimiento())
             .build();
         Tarea guardada = tareaRepo.save(tarea);
+        historialRepo.save(HistorialTarea.builder()
+            .tarea(guardada).estadoAnterior(null).nuevoEstado(guardada.getEstado())
+            .autor(creador).build());
         if (dto.getIdEmpleado() != null)
             asignar(guardada.getId(), dto.getIdEmpleado(), dto.getComentarioAdmin(), creador);
         log.info("Tarea creada: '{}' por {}", guardada.getTitulo(), creador.getEmail());
@@ -62,6 +68,9 @@ public class TareaService {
         AsignacionTarea guardada = asignacionRepo.save(asig);
 
         if (tarea.getEstado() == Tarea.Estado.NO_INICIADA) {
+            historialRepo.save(HistorialTarea.builder()
+                .tarea(tarea).estadoAnterior(Tarea.Estado.NO_INICIADA)
+                .nuevoEstado(Tarea.Estado.EN_PROGRESO).autor(asignadoPor).build());
             tarea.setEstado(Tarea.Estado.EN_PROGRESO);
             tareaRepo.save(tarea);
         }
@@ -84,8 +93,12 @@ public class TareaService {
             throw new BusinessException("No tienes permiso para actualizar esta tarea");
 
         Tarea tarea = buscarPorId(idTarea);
+        Tarea.Estado estadoAnterior = tarea.getEstado();
         tarea.setEstado(nuevoEstado);
         Tarea guardada = tareaRepo.save(tarea);
+        historialRepo.save(HistorialTarea.builder()
+            .tarea(guardada).estadoAnterior(estadoAnterior)
+            .nuevoEstado(nuevoEstado).autor(usuario).build());
         log.info("Tarea {} → {} por {}", idTarea, nuevoEstado, usuario.getEmail());
 
         // Si quien cambia el estado es el Trabajador asignado, se notifica
@@ -164,6 +177,10 @@ public class TareaService {
 
     public List<ComentarioTarea> comentarios(Long idTarea) {
         return comentarioRepo.findByTareaIdOrderByFechaComentarioAsc(idTarea);
+    }
+
+    public List<HistorialTarea> historial(Long idTarea) {
+        return historialRepo.findByTareaIdOrderByFechaCambioDesc(idTarea);
     }
 
     public Tarea buscarPorId(Long id) {

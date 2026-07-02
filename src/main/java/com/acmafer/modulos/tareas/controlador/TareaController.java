@@ -100,8 +100,9 @@ public class TareaController {
     public String detalle(@PathVariable Long id, Model model) {
         model.addAttribute("tarea", tareaService.buscarPorId(id));
         model.addAttribute("comentarios", tareaService.comentarios(id));
-         model.addAttribute("asignacion", tareaService.asignacionPorTarea(id));
-    return "tareas/detalle";
+        model.addAttribute("asignacion", tareaService.asignacionPorTarea(id));
+        model.addAttribute("historial", tareaService.historial(id));
+        return "tareas/detalle";
         
     }
 
