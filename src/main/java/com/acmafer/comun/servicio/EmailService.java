@@ -3,25 +3,29 @@ package com.acmafer.comun.servicio;
 import com.acmafer.modulos.tareas.entidad.Tarea;
 import com.acmafer.modulos.usuarios.entidad.Usuario;
 import java.util.List;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private static final String SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send";
 
     @Value("${acmafer.mail.from}")
     private String fromAddress;
+
+    @Value("${SENDGRID_API_KEY}")
+    private String sendgridApiKey;
 
     // ─── Recuperación de contraseña ───────────────────────────────────
 
@@ -187,15 +191,23 @@ public class EmailService {
 
     private void enviar(String dest, String asunto, String htmlCuerpo) {
         try {
-            MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-            helper.setFrom(fromAddress, "ACMAFER Sistema");
-            helper.setTo(dest);
-            helper.setSubject(asunto);
-            helper.setText(htmlCuerpo, true);
-            mailSender.send(msg);
+            Map<String, Object> payload = Map.of(
+                    "personalizations", List.of(Map.of(
+                            "to", List.of(Map.of("email", dest)),
+                            "subject", asunto)),
+                    "from", Map.of("email", fromAddress, "name", "ACMAFER Sistema"),
+                    "content", List.of(Map.of(
+                            "type", "text/html",
+                            "value", htmlCuerpo)));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(sendgridApiKey);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+            restTemplate.postForEntity(SENDGRID_URL, request, String.class);
             log.info("[EMAIL ✓] Para: {} | Asunto: {}", dest, asunto);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+        } catch (RestClientException e) {
             log.error("[EMAIL ✗] No se pudo enviar a {}: {}", dest, e.getMessage());
         }
     }
