@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crear cuenta — ACMAFER</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap"
+    rel="stylesheet" />
+  <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1rem
+    }
+
+    .reg-wrap {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      z-index: 1
+    }
+
+    .reg-card {
+      background: var(--card);
+      border: 1px solid var(--card-b);
+      border-radius: 22px;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden
+    }
+
+    .reg-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--fire-2), var(--spark), var(--fire-1))
+    }
+
+    .reg-brand {
+      text-align: center;
+      margin-bottom: 2rem
+    }
+
+    .reg-logo {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto .75rem;
+      filter: drop-shadow(0 0 12px rgba(255, 106, 0, .6))
+    }
+
+    .reg-brand h1 {
+      font-family: var(--fd);
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--fire-1);
+      letter-spacing: 3px
+    }
+
+    .reg-brand p {
+      font-size: .82rem;
+      color: var(--text-m);
+      margin: 0
+    }
+
+    .reg-heading {
+      text-align: center;
+      margin-bottom: 1.75rem
+    }
+
+    .reg-heading h2 {
+      font-family: var(--fd);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-h, var(--text));
+      margin-bottom: .25rem
+    }
+
+    .reg-heading p {
+      font-size: .85rem;
+      color: var(--text-m);
+      margin: 0
+    }
+
+    .reg-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem
+    }
+
+    @media (max-width: 420px) {
+      .reg-row {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .pwd-wrap {
+      position: relative
+    }
+
+    #togglePwd {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-m);
+      cursor: pointer;
+      padding: 4px;
+      transition: color var(--t)
+    }
+
+    #togglePwd:hover {
+      color: var(--fire-1)
+    }
+
+    .btn-reg-submit {
+      width: 100%;
+      padding: .9rem;
+      background: linear-gradient(135deg, var(--fire-1), var(--fire-2));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--fd);
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all var(--t);
+      box-shadow: 0 6px 20px rgba(255, 106, 0, .35);
+      margin-top: .5rem
+    }
+
+    .btn-reg-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(255, 106, 0, .5)
+    }
+
+    .reg-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: .88rem;
+      color: var(--text-m)
+    }
+
+    .reg-footer a {
+      color: var(--fire-1);
+      font-weight: 600
+    }
+
+    .btn-back-home {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .6rem 1.1rem;
+      background: var(--card);
+      border: 1px solid var(--card-b);
+      border-radius: 10px;
+      color: var(--text-m);
+      font-family: var(--fd);
+      font-size: .82rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-decoration: none;
+      transition: all var(--t);
+    }
+
+    .btn-back-home:hover {
+      color: var(--fire-1);
+      border-color: var(--fire-1);
+      transform: translateX(-3px);
+      box-shadow: 0 4px 14px rgba(255, 106, 0, .2);
+    }
+
+    @media (max-width: 480px) {
+      .btn-back-home span {
+        display: none;
+      }
+
+      .btn-back-home {
+        padding: .6rem .75rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="particlesBg"></canvas>
+
+  <a th:href="@{/}" class="btn-back-home">
+    <i class="bi bi-arrow-left"></i>
+    <span data-i18n="back_home">Volver al inicio</span>
+  </a>
+
+  <div class="reg-wrap">
+    <div class="reg-card">
+      <div class="reg-brand">
+        <div class="reg-logo">
+          <svg viewBox="0 0 50 50" fill="none">
+            <path d="M25 5 L45 40 H5 Z" fill="url(#rf1)" />
+            <circle cx="25" cy="28" r="8" fill="url(#rf2)" />
+            <defs>
+              <linearGradient id="rf1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FF6A00" />
+                <stop offset="100%" stop-color="#CC7032" />
+              </linearGradient>
+              <radialGradient id="rf2">
+                <stop offset="0%" stop-color="#FFFF66" />
+                <stop offset="100%" stop-color="#FF6A00" />
+              </radialGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1>ACMAFER</h1>
+        <p data-i18n="login_title">Sistema de Gestión Industrial</p>
+      </div>
+
+      <div class="reg-heading">
+        <h2 data-i18n="reg_title">Crear cuenta</h2>
+        <p data-i18n="reg_subtitle">Completa tus datos para registrarte como cliente</p>
+      </div>
+
+      <div class="acm-alert acm-alert-danger" th:if="${error}">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}">Error</span>
+      </div>
+
+      <form th:action="@{/auth/registro}" th:object="${dto}" method="post" novalidate autocomplete="off">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="reg-row mb-3">
+          <div>
+            <label class="acm-label" data-i18n="reg_nombre_label">Nombre *</label>
+            <input type="text" th:field="*{nombre}" class="acm-input"
+              th:classappend="${#fields.hasErrors('nombre')} ? 'border-danger'"
+              data-i18n-placeholder="reg_nombre_ph" placeholder="Tu nombre" autocomplete="off" />
+            <div class="text-danger" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></div>
+          </div>
+          <div>
+            <label class="acm-label" data-i18n="reg_apellido_label">Apellido *</label>
+            <input type="text" th:field="*{apellido}" class="acm-input"
+              th:classappend="${#fields.hasErrors('apellido')} ? 'border-danger'"
+              data-i18n-placeholder="reg_apellido_ph" placeholder="Tu apellido" autocomplete="off" />
+            <div class="text-danger" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="acm-label" data-i18n="reg_documento_label">Documento *</label>
+          <input type="text" th:field="*{documento}" class="acm-input"
+            th:classappend="${#fields.hasErrors('documento')} ? 'border-danger'"
+            data-i18n-placeholder="reg_documento_ph" placeholder="Número de documento" autocomplete="off" />
+          <div class="text-danger" th:if="${#fields.hasErrors('documento')}" th:errors="*{documento}"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="acm-label" data-i18n="login_email_label">Correo electrónico *</label>
+          <input type="email" th:field="*{email}" class="acm-input"
+            th:classappend="${#fields.hasErrors('email')} ? 'border-danger'"
+            data-i18n-placeholder="login_email_ph" placeholder="correo@ejemplo.com" autocomplete="off" />
+          <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="acm-label" data-i18n="reg_celular_label">Celular</label>
+          <input type="text" th:field="*{celular}" class="acm-input" placeholder="300 000 0000"
+            autocomplete="off" />
+        </div>
+
+        <div class="mb-4">
+          <label class="acm-label" data-i18n="reg_clave_label">Contraseña * (mínimo 8 caracteres)</label>
+          <div class="pwd-wrap">
+            <input type="password" id="pwdInput" th:field="*{clave}" class="acm-input pe-5"
+              th:classappend="${#fields.hasErrors('clave')} ? 'border-danger'" placeholder="••••••••"
+              autocomplete="new-password" />
+            <button type="button" id="togglePwd">
+              <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+          <div class="text-danger" th:if="${#fields.hasErrors('clave')}" th:errors="*{clave}"></div>
+        </div>
+
+        <button type="submit" class="btn-reg-submit" data-i18n="reg_btn">
+          <i class="bi bi-person-plus-fill"></i> Crear cuenta
+        </button>
+      </form>
+
+      <div class="reg-footer">
+        <p><span data-i18n="reg_have_account">¿Ya tienes una cuenta?</span>
+          <a th:href="@{/auth/login}" data-i18n="login_link">Inicia sesión</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lang-switcher-float" id="langSwitcher"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/particles.js}"></script>
+  <script th:src="@{/js/acmafer.js}"></script>
+  <script th:src="@{/js/i18n.js}"></script>
+  <script>
+    document.getElementById('togglePwd').addEventListener('click', function () {
+      const input = document.getElementById('pwdInput');
+      const icon = document.getElementById('eyeIcon');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      icon.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+  </script>
+</body>
+
+</html>

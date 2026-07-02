@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><meta charset="UTF-8"/><title>Mi Rendimiento — ACMAFER</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" rel="stylesheet"/>
+<link th:href="@{/css/acmafer.css}" rel="stylesheet"/>
+</head>
+<body>
+<canvas id="particlesBg"></canvas>
+<div th:replace="~{layout/navbar :: navbar}"></div>
+<main class="acm-main" style="padding-top:80px">
+<div class="container" style="max-width:700px">
+    <div class="acm-page-header">
+        <h1 class="acm-page-title"><i class="bi bi-graph-up-arrow me-2"></i>Mi Rendimiento</h1>
+    </div>
+
+    <!-- KPI central -->
+    <div class="text-center mb-4">
+        <div style="display:inline-flex;align-items:center;justify-content:center;
+                    width:140px;height:140px;border-radius:50%;
+                    border:8px solid var(--acm-primary);background:#fff;
+                    font-family:var(--font-display);font-size:40px;font-weight:800;
+                    color:var(--acm-primary)">
+            <span th:text="${rendimiento + '%'}">0%</span>
+        </div>
+        <p style="margin-top:12px;color:var(--acm-gray);font-size:13px">
+            Porcentaje de tareas completadas
+        </p>
+    </div>
+
+    <!-- Lista de mis asignaciones -->
+    <div class="acm-card">
+        <div class="acm-card-header"><i class="bi bi-list-check"></i> Mis asignaciones activas</div>
+        <div class="acm-card-body">
+            <div class="text-center py-3" th:if="${misTareas.isEmpty()}">
+                <p style="color:var(--acm-gray)">No tienes tareas asignadas actualmente.</p>
+            </div>
+            <div th:each="a : ${misTareas}" class="d-flex align-items-center gap-3 mb-3 p-3 rounded"
+                 style="border:1px solid var(--acm-border)">
+                <span class="acm-status"
+                      th:classappend="' prioridad-' + ${a.tarea.prioridad}"
+                      th:text="${a.tarea.prioridad}"></span>
+                <div class="flex-grow-1">
+                    <div style="font-weight:600;font-size:13px" th:text="${a.tarea.titulo}">Tarea</div>
+                    <div style="font-size:11px;color:var(--acm-gray)"
+                         th:if="${a.tarea.fechaVencimiento}"
+                         th:text="'Vence: ' + ${#temporals.format(a.tarea.fechaVencimiento,'dd/MM/yyyy')}"></div>
+                </div>
+                <span class="acm-status"
+                      th:classappend="' ' + ${a.tarea.estado.name().toLowerCase().replace('_','-')}"
+                      th:text="${a.tarea.estado}"></span>
+                <a th:href="@{'/tareas/detalle/' + ${a.tarea.id}}"
+                   class="acm-btn acm-btn-outline acm-btn-sm">
+                    <i class="bi bi-eye"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script th:src="@{/js/acmafer.js}"></script>
+<div th:replace="~{layout/navbar :: chatbot}"></div>
+<div th:replace="~{layout/navbar :: cartNotif}"></div>
+<footer th:replace="~{layout/navbar :: footer}"></footer>
+<th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+</html>

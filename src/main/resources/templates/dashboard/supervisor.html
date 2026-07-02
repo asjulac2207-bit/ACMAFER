@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout/main :: head(title='Dashboard Supervisor')}"></head>
+
+<body th:replace="~{layout/main :: body(contenido=~{::main-frag})}">
+
+  <main th:fragment="main-frag">
+    <div class="wk-main">
+      <div class="wk-embers" id="wkEmbers"></div>
+
+      <div class="container-fluid px-4 py-3">
+
+        <!-- Hero greeting -->
+        <div class="wk-hero mb-3">
+          <div class="wk-hero-eyebrow">// ACMAFER · Supervisión</div>
+          <h1 class="wk-hero-title">
+            <span data-i18n="dash_welcome">Hola</span>, <span sec:authentication="principal.nombre">Supervisor</span>
+          </h1>
+          <p class="wk-hero-sub">
+            <span data-i18n="dash_supervisor_subtitle">Panel de Supervisión — Control operativo del equipo y pedidos</span>
+          </p>
+        </div>
+
+        <!-- ── Datos para JS ── -->
+        <div id="kpisData"
+             th:data-pendientes="${kpis.pedidosPendientes}"
+             th:data-procesando="${kpis.pedidosProcesando}"
+             th:data-aprobados="${kpis.pedidosAprobados}"
+             th:data-entregados="${kpis.pedidosEntregados}"
+             th:data-completados="${kpis.pedidosCompletados}"
+             th:data-tareas-progreso="${kpis.tareasEnProgreso}"
+             th:data-tareas-bloqueadas="${kpis.tareasBloqueadas}"
+             th:data-stock-bajo="${kpis.productosStockBajo}"
+             th:data-ventas="${kpis.totalVentas}"
+             style="display:none"></div>
+
+        <div id="pedidosMesData" th:each="entry : ${pedidosMes}"
+             th:data-mes="${entry.key}" th:data-cant="${entry.value}"
+             class="mes-data" style="display:none"></div>
+
+        <div id="topProductosData" th:each="p : ${topProductos}"
+             th:data-nombre="${p.nombre}" th:data-ventas="${p.ventas}"
+             class="prod-data" style="display:none"></div>
+
+        <!-- KPI Row -->
+        <div class="wk-kpis mb-3">
+          <div class="wk-kpi orange reveal">
+            <div class="wk-kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="wk-kpi-val" th:data-count="${kpis.pedidosPendientes}">0</div>
+            <div class="wk-kpi-label" data-i18n="kpi_pending_orders">Pedidos Pendientes</div>
+          </div>
+          <div class="wk-kpi green reveal">
+            <div class="wk-kpi-icon"><i class="bi bi-bag-check"></i></div>
+            <div class="wk-kpi-val" th:data-count="${kpis.pedidosEntregados}">0</div>
+            <div class="wk-kpi-label" data-i18n="kpi_delivered_orders">Pedidos Entregados</div>
+          </div>
+          <div class="wk-kpi blue reveal">
+            <div class="wk-kpi-icon"><i class="bi bi-kanban"></i></div>
+            <div class="wk-kpi-val" th:data-count="${kpis.tareasEnProgreso}">0</div>
+            <div class="wk-kpi-label" data-i18n="kpi_active_tasks">Tareas Activas</div>
+            <div class="wk-kpi-delta down" th:if="${kpis.tareasBloqueadas != null and kpis.tareasBloqueadas > 0}">
+              <span th:text="${kpis.tareasBloqueadas}">0</span> <span data-i18n="kpi_blocked">bloqueadas</span>
+            </div>
+          </div>
+          <div class="wk-kpi red reveal">
+            <div class="wk-kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="wk-kpi-val" th:data-count="${kpis.productosStockBajo}" style="color:var(--wk-red)">0</div>
+            <div class="wk-kpi-label" data-i18n="kpi_low_stock">Stock Bajo</div>
+          </div>
+        </div>
+
+        <!-- Charts: Tendencia mensual + Distribución por estado -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="wk-card h-100">
+              <div class="wk-card-head">
+                <h2 class="wk-card-title">
+                  <i class="bi bi-graph-up-arrow"></i>
+                  <span data-i18n="dash_monthly_trend">Pedidos por Mes — Año Actual</span>
+                </h2>
+              </div>
+              <div class="wk-card-body">
+                <div style="height:260px">
+                  <canvas id="tendenciaChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="wk-card h-100">
+              <div class="wk-card-head">
+                <h2 class="wk-card-title">
+                  <i class="bi bi-pie-chart"></i>
+                  <span data-i18n="dash_orders_by_state">Pedidos por Estado</span>
+                </h2>
+              </div>
+              <div class="wk-card-body">
+                <div style="height:260px">
+                  <canvas id="estadosChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Crítico + Top Productos (lado a lado) -->
+        <div class="row g-3 mb-3">
+          <!-- Stock Crítico -->
+          <div class="col-md-6" th:if="${kpis.stockBajo != null and !kpis.stockBajo.isEmpty()}">
+            <div class="wk-card h-100">
+              <div class="wk-card-head">
+                <h2 class="wk-card-title">
+                  <i class="bi bi-exclamation-triangle" style="color:var(--wk-red)"></i>
+                  <span data-i18n="dash_critical_stock">Stock Crítico</span>
+                </h2>
+              </div>
+              <div class="wk-card-body">
+                <div style="max-height:280px;overflow-y:auto">
+                  <div th:each="p : ${kpis.stockBajo}" class="wk-mini-row">
+                    <span class="wk-mini-name" th:text="${p.nombre}">Producto</span>
+                    <span class="wk-mini-badge" th:text="${p.stockActual} + ' uds.'">0</span>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <a th:href="@{/productos/catalogo}" class="wk-btn-outline wk-btn-sm w-100">
+                    <i class="bi bi-box-seam"></i> <span data-i18n="dash_view_inventory">Ver inventario completo</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6" th:if="${kpis.stockBajo == null or kpis.stockBajo.isEmpty()}">
+            <div class="wk-card h-100">
+              <div class="wk-card-head">
+                <h2 class="wk-card-title">
+                  <i class="bi bi-check-circle" style="color:var(--wk-green)"></i>
+                  <span data-i18n="dash_stock_ok">Stock en Buen Estado</span>
+                </h2>
+              </div>
+              <div class="wk-card-body">
+                <div class="wk-empty-state">
+                  <i class="bi bi-check-circle" style="color:var(--wk-green)"></i>
+                  <p data-i18n="dash_no_critical_stock">No hay productos con stock crítico</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Productos -->
+          <div class="col-md-6" th:if="${topProductos != null and !topProductos.isEmpty()}">
+            <div class="wk-card h-100">
+              <div class="wk-card-head">
+                <h2 class="wk-card-title">
+                  <i class="bi bi-trophy"></i>
+                  <span data-i18n="dash_top_products">Top Productos Vendidos</span>
+                </h2>
+              </div>
+              <div class="wk-card-body">
+                <div id="topProductosList" style="max-height:280px;overflow-y:auto">
+                  <!-- generado por JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="row g-3 mb-3">
+          <div class="col-12">
+            <div class="wk-card">
+              <div class="wk-card-head">
+                <h2 class="wk-card-title">
+                  <i class="bi bi-lightning-fill"></i>
+                  <span data-i18n="dash_quick_actions">Acciones Rápidas</span>
+                </h2>
+              </div>
+              <div class="wk-card-body">
+                <div class="d-flex flex-wrap gap-2">
+                  <a th:href="@{/pedidos/todos}" class="wk-btn-primary wk-btn-sm">
+                    <i class="bi bi-cart3"></i> <span data-i18n="dash_view_orders">Ver Pedidos</span>
+                  </a>
+                  <a th:href="@{/tareas/nueva}" class="wk-btn-outline wk-btn-sm">
+                    <i class="bi bi-plus-circle"></i> <span data-i18n="dash_new_task">Nueva Tarea</span>
+                  </a>
+                  <a th:href="@{/reportes}" class="wk-btn-outline wk-btn-sm">
+                    <i class="bi bi-file-earmark-pdf"></i> <span data-i18n="dash_reports">Reportes</span>
+                  </a>
+                  <a th:href="@{/reportes/pdf/dashboard}" class="wk-btn-outline wk-btn-sm">
+                    <i class="bi bi-download"></i> <span data-i18n="dash_export_pdf">Exportar PDF</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /wk-main -->
+
+    <!-- Estilos específicos del dashboard supervisor — ACMAFER Glass Industrial -->
+    <style>
+      :root,
+      [data-theme="dark"] {
+        --wk-bg1: #0a0e1a;
+        --wk-bg2: #0f172a;
+        --wk-bg3: #1a1f35;
+        --wk-surface: rgba(30, 41, 59, .55);
+        --wk-surface-2: rgba(30, 41, 59, .75);
+        --wk-border: rgba(255, 255, 255, .08);
+        --wk-border-2: rgba(255, 255, 255, .14);
+        --wk-border-3: rgba(255, 106, 0, .35);
+        --wk-text-1: #f8fafc;
+        --wk-text-2: #e2e8f0;
+        --wk-text-3: #cbd5e1;
+        --wk-text-4: #94a3b8;
+        --wk-text-5: #64748b;
+        --wk-shadow: 0 20px 60px rgba(0, 0, 0, .4);
+        --wk-accent: #ff6a00;
+        --wk-accent-2: #ff8533;
+        --wk-accent-glow: rgba(255, 106, 0, .35);
+        --wk-green: #16a34a;
+        --wk-blue: #2563eb;
+        --wk-red: #ef4444;
+        --wk-amber: #f59e0b;
+        --wk-purple: #9333ea;
+        --wk-radius: 14px;
+        --wk-ff-title: 'Orbitron', sans-serif;
+        --wk-ff-ui: 'Rajdhani', sans-serif;
+        --wk-ff-mono: 'Share Tech Mono', monospace;
+      }
+
+      [data-theme="light"] {
+        --wk-bg1: #eef2f7;
+        --wk-bg2: #e2e8f0;
+        --wk-bg3: #f8fafc;
+        --wk-surface: rgba(255, 255, 255, .72);
+        --wk-surface-2: rgba(255, 255, 255, .92);
+        --wk-border: rgba(15, 23, 42, .08);
+        --wk-border-2: rgba(15, 23, 42, .14);
+        --wk-border-3: rgba(255, 106, 0, .35);
+        --wk-text-1: #0f172a;
+        --wk-text-2: #1e293b;
+        --wk-text-3: #334155;
+        --wk-text-4: #64748b;
+        --wk-text-5: #94a3b8;
+        --wk-shadow: 0 20px 60px rgba(15, 23, 42, .1);
+      }
+
+      /* ── Fondo principal con gradiente + glows ── */
+      .wk-main {
+        position: relative;
+        margin: -1rem -1rem 0;
+        padding: 1rem;
+        background:
+          radial-gradient(ellipse 900px 500px at 15% 0%, rgba(255, 106, 0, .10), transparent 60%),
+          radial-gradient(ellipse 800px 600px at 100% 30%, rgba(37, 99, 235, .08), transparent 60%),
+          linear-gradient(160deg, var(--wk-bg1) 0%, var(--wk-bg2) 55%, var(--wk-bg3) 100%);
+        overflow: hidden;
+      }
+
+      .wk-main::before,
+      .wk-main::after {
+        content: '';
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+        z-index: 0;
+        animation: wkGlowPulse 8s ease-in-out infinite;
+      }
+
+      .wk-main::before {
+        width: 420px;
+        height: 420px;
+        top: -120px;
+        left: -100px;
+        background: var(--wk-accent-glow);
+      }
+
+      .wk-main::after {
+        width: 380px;
+        height: 380px;
+        bottom: -140px;
+        right: -80px;
+        background: rgba(37, 99, 235, .18);
+        animation-delay: 3s;
+      }
+
+      @keyframes wkGlowPulse {
+        0%, 100% { opacity: .55; transform: scale(1); }
+        50% { opacity: .9; transform: scale(1.12); }
+      }
+
+      /* ── Brasas flotantes ── */
+      .wk-embers {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .wk-ember {
+        position: absolute;
+        bottom: -10px;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--wk-accent);
+        box-shadow: 0 0 6px 2px var(--wk-accent-glow);
+        opacity: 0;
+        animation: wkEmberDrift linear infinite;
+      }
+
+      @keyframes wkEmberDrift {
+        0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+        10% { opacity: .9; }
+        90% { opacity: .5; }
+        100% { transform: translate(var(--wk-drift, 30px), -110vh) scale(1); opacity: 0; }
+      }
+
+      .wk-main > .container-fluid { position: relative; z-index: 1; }
+
+      /* ── Hero ── */
+      .wk-hero {
+        position: relative;
+        background: var(--wk-surface);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--wk-border);
+        border-radius: var(--wk-radius);
+        box-shadow: var(--wk-shadow);
+        padding: 1.75rem 2rem;
+        overflow: hidden;
+      }
+
+      .wk-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 140px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--wk-accent), transparent);
+        background-size: 200% 100%;
+        animation: wkBorderFlow 3.5s linear infinite;
+      }
+
+      @keyframes wkBorderFlow {
+        0% { background-position: 0% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .wk-hero-eyebrow {
+        font-family: var(--wk-ff-mono);
+        font-size: .78rem;
+        letter-spacing: .12em;
+        color: var(--wk-accent);
+        text-transform: uppercase;
+        margin-bottom: .5rem;
+      }
+
+      .wk-hero-title {
+        font-family: var(--wk-ff-title);
+        font-weight: 900;
+        font-size: 1.7rem;
+        letter-spacing: .01em;
+        margin: 0;
+        color: var(--wk-text-1);
+      }
+
+      .wk-hero-title span[sec\:authentication],
+      .wk-hero-title span[data-i18n="dash_welcome"] {
+        background: linear-gradient(90deg, var(--wk-text-1) 20%, var(--wk-accent-2) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .wk-hero-sub {
+        color: var(--wk-text-4);
+        font-size: .9rem;
+        margin: .4rem 0 0;
+      }
+
+      /* ── KPIs ── */
+      .wk-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+      }
+
+      @media (max-width: 767px) {
+        .wk-kpis { grid-template-columns: repeat(2, 1fr); }
+      }
+
+      .wk-kpi {
+        background: var(--wk-surface);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--wk-border);
+        border-radius: var(--wk-radius);
+        padding: 1.35rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--wk-shadow);
+        transition: transform .3s, border-color .3s, box-shadow .3s;
+      }
+
+      .wk-kpi::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 3px;
+        background: var(--wk-accent-c, var(--wk-accent));
+        opacity: 0;
+        transition: opacity .3s;
+      }
+
+      .wk-kpi:hover {
+        transform: translateY(-4px);
+        border-color: var(--wk-accent-c, var(--wk-accent));
+        box-shadow: 0 12px 32px -8px var(--wk-accent-c, var(--wk-accent-glow));
+      }
+
+      .wk-kpi:hover::before { opacity: 1; }
+
+      .wk-kpi.orange { --wk-accent-c: var(--wk-accent); }
+      .wk-kpi.green  { --wk-accent-c: var(--wk-green); }
+      .wk-kpi.blue   { --wk-accent-c: var(--wk-blue); }
+      .wk-kpi.red    { --wk-accent-c: var(--wk-red); }
+      .wk-kpi.amber  { --wk-accent-c: var(--wk-amber); }
+
+      .wk-kpi-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: .9rem;
+        font-size: 1.3rem;
+        background: color-mix(in srgb, var(--wk-accent-c, var(--wk-accent)) 15%, transparent);
+        color: var(--wk-accent-c, var(--wk-accent));
+      }
+
+      .wk-kpi-val {
+        font-family: var(--wk-ff-title);
+        font-size: 1.9rem;
+        font-weight: 900;
+        color: var(--wk-text-1);
+        line-height: 1.1;
+        margin-bottom: .2rem;
+      }
+
+      .wk-kpi-label {
+        font-size: .82rem;
+        color: var(--wk-text-4);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: .3rem;
+      }
+
+      .wk-kpi-delta {
+        font-size: .78rem;
+        font-weight: 600;
+        padding: .22rem .55rem;
+        border-radius: 6px;
+        display: inline-block;
+      }
+
+      .wk-kpi-delta.down { background: rgba(239, 68, 68, .15); color: var(--wk-red); }
+
+      /* ── Card glass ── */
+      .wk-card {
+        background: var(--wk-surface);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--wk-border);
+        border-radius: var(--wk-radius);
+        box-shadow: var(--wk-shadow);
+        overflow: hidden;
+      }
+
+      .wk-card-head {
+        padding: 1.1rem 1.35rem;
+        border-bottom: 1px solid var(--wk-border);
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+      }
+
+      .wk-card-title {
+        font-family: var(--wk-ff-title);
+        font-size: .88rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        color: var(--wk-text-1);
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin: 0;
+      }
+
+      .wk-card-title i { color: var(--wk-accent); font-size: 1.05rem; }
+      .wk-card-body { padding: 1.35rem; }
+
+      .wk-empty-state {
+        text-align: center;
+        padding: 2rem 0;
+        color: var(--wk-text-4);
+      }
+
+      .wk-empty-state i { font-size: 2.5rem; display: block; margin-bottom: 1rem; }
+
+      /* ── Mini filas (stock crítico) ── */
+      .wk-mini-row {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .5rem 0;
+        border-bottom: 1px solid var(--wk-border);
+      }
+
+      .wk-mini-row:last-child { border-bottom: none; }
+
+      .wk-mini-name {
+        font-size: .86rem;
+        color: var(--wk-text-2);
+        flex: 1;
+      }
+
+      .wk-mini-badge {
+        font-family: var(--wk-ff-mono);
+        font-size: .78rem;
+        font-weight: 700;
+        padding: .18rem .55rem;
+        border-radius: 4px;
+        background: rgba(239, 68, 68, .12);
+        color: var(--wk-red);
+        border: 1px solid rgba(239, 68, 68, .25);
+      }
+
+      /* ── Sparklines para top productos ── */
+      .spark-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--wk-border);
+        gap: 1rem;
+      }
+
+      .spark-row:last-child { border-bottom: none; }
+      .spark-info { flex: 1; min-width: 0; }
+
+      .spark-info .nom {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--wk-text-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .spark-info .sub { font-size: 0.75rem; color: var(--wk-text-4); }
+      .spark-canvas-wrap { width: 100px; flex-shrink: 0; }
+
+      .spark-val {
+        font-family: var(--wk-ff-mono);
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--wk-accent);
+        min-width: 60px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      /* ── Botones ── */
+      .wk-btn-outline,
+      .wk-btn-primary {
+        padding: .7rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: .85rem;
+        font-family: var(--wk-ff-ui);
+        transition: all .3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        border: 1px solid transparent;
+      }
+
+      .wk-btn-sm { padding: .5rem .85rem; font-size: .8rem; }
+
+      .wk-btn-outline {
+        background: transparent;
+        border-color: var(--wk-accent);
+        color: var(--wk-accent);
+      }
+
+      .wk-btn-outline:hover {
+        background: var(--wk-accent);
+        color: #0a0e1a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px var(--wk-accent-glow);
+      }
+
+      .wk-btn-primary {
+        background: linear-gradient(135deg, var(--wk-accent), var(--wk-accent-2));
+        color: #0a0e1a;
+        box-shadow: 0 4px 16px var(--wk-accent-glow);
+      }
+
+      .wk-btn-primary:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    </style>
+
+    <!-- Scripts para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script th:inline="javascript">
+      // ── Brasas flotantes ──
+      (function () {
+        const wrap = document.getElementById('wkEmbers');
+        if (!wrap) return;
+        for (let i = 0; i < 14; i++) {
+          const e = document.createElement('span');
+          e.className = 'wk-ember';
+          e.style.left = Math.random() * 100 + '%';
+          e.style.setProperty('--wk-drift', (Math.random() * 60 - 30) + 'px');
+          e.style.animationDuration = (6 + Math.random() * 6) + 's';
+          e.style.animationDelay = (Math.random() * 8) + 's';
+          wrap.appendChild(e);
+        }
+      })();
+
+      // ── Leer datos del DOM ──
+      document.addEventListener('DOMContentLoaded', () => {
+        const kd = document.getElementById('kpisData').dataset;
+        const kpis = {
+          pendientes: parseInt(kd.pendientes || 0),
+          procesando: parseInt(kd.procesando || 0),
+          aprobados: parseInt(kd.aprobados || 0),
+          entregados: parseInt(kd.entregados || 0),
+          completados: parseInt(kd.completados || 0),
+          tareasProgreso: parseInt(kd.tareasProgreso || 0),
+          tareasBloqueadas: parseInt(kd.tareasBloqueadas || 0),
+          stockBajo: parseInt(kd.stockBajo || 0),
+          ventas: parseFloat(kd.ventas || 0)
+        };
+
+        // Meses (1-12) con cantidad de pedidos
+        const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const pedidosPorMes = new Array(12).fill(0);
+        document.querySelectorAll('.mes-data').forEach(el => {
+          const mes = parseInt(el.dataset.mes);
+          const cant = parseInt(el.dataset.cant);
+          if (mes >= 1 && mes <= 12) pedidosPorMes[mes - 1] = cant;
+        });
+
+        // Top productos
+        const topProductos = [];
+        document.querySelectorAll('.prod-data').forEach(el => {
+          topProductos.push({
+            nombre: el.dataset.nombre,
+            ventas: parseInt(el.dataset.ventas || 0)
+          });
+        });
+
+        // ── Estilo Chart.js global ──
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Rajdhani', sans-serif";
+
+        const COLOR_FIRE = '#FF6A00';
+        const COLOR_FIRE_L = 'rgba(255,106,0,.15)';
+        const COLOR_GREEN = '#16A34A';
+        const COLOR_BLUE = '#2563EB';
+        const COLOR_RED = '#ef4444';
+        const COLOR_GRID = 'rgba(255,255,255,.06)';
+
+        // ══════════════════════════════════════════
+        // 1. TENDENCIA MENSUAL — área suave
+        // ══════════════════════════════════════════
+        const tendenciaCtx = document.getElementById('tendenciaChart');
+        if (tendenciaCtx) {
+          new Chart(tendenciaCtx, {
+            type: 'line',
+            data: {
+              labels: mesesNombres,
+              datasets: [{
+                label: 'Pedidos',
+                data: pedidosPorMes,
+                borderColor: COLOR_FIRE,
+                backgroundColor: COLOR_FIRE_L,
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: COLOR_FIRE,
+                pointBorderColor: '#1e293b',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#1e293b',
+                  titleColor: '#f1f5f9',
+                  bodyColor: '#f1f5f9',
+                  borderColor: 'rgba(255,106,0,0.5)',
+                  borderWidth: 1,
+                  padding: 10,
+                  displayColors: false
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: {
+                    font: { size: 11 },
+                    color: '#94a3b8'
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  grid: { color: COLOR_GRID },
+                  ticks: {
+                    precision: 0,
+                    font: { size: 11 },
+                    color: '#94a3b8'
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        // ══════════════════════════════════════════
+        // 2. ESTADOS DE PEDIDOS — donut
+        // ══════════════════════════════════════════
+        const estadosCtx = document.getElementById('estadosChart');
+        if (estadosCtx) {
+          new Chart(estadosCtx, {
+            type: 'doughnut',
+            data: {
+              labels: ['Pendiente', 'Procesando', 'Aprobado', 'Entregado', 'Completado'],
+              datasets: [{
+                data: [kpis.pendientes, kpis.procesando, kpis.aprobados, kpis.entregados, kpis.completados],
+                backgroundColor: ['#ffa500', COLOR_BLUE, '#9333ea', COLOR_GREEN, '#16a34a'],
+                borderWidth: 0,
+                hoverOffset: 8
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '60%',
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    font: { size: 11, family: "'Rajdhani', sans-serif" },
+                    boxWidth: 12,
+                    padding: 12,
+                    color: '#94a3b8'
+                  }
+                },
+                tooltip: {
+                  backgroundColor: '#1e293b',
+                  titleColor: '#f1f5f9',
+                  bodyColor: '#f1f5f9',
+                  borderColor: 'rgba(255,106,0,0.5)',
+                  borderWidth: 1,
+                  padding: 12,
+                  callbacks: {
+                    label: function (context) {
+                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                      const pct = total > 0 ? Math.round(context.parsed * 100 / total) : 0;
+                      return context.label + ': ' + context.parsed + ' (' + pct + '%)';
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        // ══════════════════════════════════════════
+        // 3. TOP PRODUCTOS — lista con sparkline
+        // ══════════════════════════════════════════
+        const listEl = document.getElementById('topProductosList');
+        if (listEl && topProductos.length > 0) {
+          topProductos.forEach((p, i) => {
+            const row = document.createElement('div');
+            row.className = 'spark-row';
+            const canvasId = 'spark-' + i;
+            row.innerHTML = `
+              <div class="spark-info">
+                <div class="nom">${p.nombre}</div>
+                <div class="sub">Unidades vendidas</div>
+              </div>
+              <div class="spark-canvas-wrap">
+                <canvas id="${canvasId}" height="36"></canvas>
+              </div>
+              <div class="spark-val">${p.ventas}</div>
+            `;
+            listEl.appendChild(row);
+
+            // Sparkline con datos simulados
+            const base = p.ventas;
+            const trendData = [
+              Math.round(base * 0.6),
+              Math.round(base * 0.7),
+              Math.round(base * 0.65),
+              Math.round(base * 0.85),
+              Math.round(base * 0.8),
+              Math.round(base * 0.95),
+              base
+            ];
+
+            new Chart(document.getElementById(canvasId), {
+              type: 'line',
+              data: {
+                labels: trendData.map((_, idx) => idx),
+                datasets: [{
+                  data: trendData,
+                  borderColor: COLOR_FIRE,
+                  backgroundColor: COLOR_FIRE_L,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                  tension: 0.4,
+                  fill: true
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                  x: { display: false },
+                  y: { display: false }
+                }
+              }
+            });
+          });
+        }
+      });
+    </script>
+  </main>
+
+</body>
+
+</html>

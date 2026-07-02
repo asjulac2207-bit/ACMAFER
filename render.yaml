@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: acmafer-web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: EPAYCO_PUBLIC_KEY
+        sync: false
+      - key: EPAYCO_PRIVATE_KEY
+        sync: false
+      - key: EPAYCO_CUSTOMER_ID
+        sync: false
+      - key: EPAYCO_P_KEY
+        sync: false
+      - key: EPAYCO_TEST
+        value: "true"
+      - key: EPAYCO_RESPONSE_URL
+        sync: false
+      - key: EPAYCO_CONFIRMATION_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ACMAFER_BCRYPT_STRENGTH
+        value: "10"
+      - key: COOKIE_SECURE
+        value: "true"

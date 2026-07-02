@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Producto — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+
+    <style>
+        /* ── Tokens ── */
+        :root {
+            --ep-bg:          #0f1117;
+            --ep-surface:     #13161e;
+            --ep-surface-2:   #0d0f14;
+            --ep-border:      #1e2330;
+            --ep-border-2:    #2a3040;
+            --ep-orange:      #ff6b1a;
+            --ep-orange-dim:  rgba(255,107,26,.10);
+            --ep-orange-glow: rgba(255,107,26,.28);
+            --ep-text:        #e0e2e8;
+            --ep-muted:       #5a627a;
+            --ep-muted-2:     #3a4055;
+            --ep-green:       #4ade80;
+            --ep-red:         #f87171;
+            --ep-yellow:      #fbbf24;
+            --ep-radius:      10px;
+            --ep-radius-lg:   16px;
+        }
+
+        /* ── Page shell ── */
+        body { background: var(--ep-bg) !important; color: var(--ep-text); }
+
+        /* ── Back button ── */
+        .ep-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1px solid var(--ep-border);
+            border-radius: var(--ep-radius);
+            color: var(--ep-muted);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 7px 16px;
+            text-decoration: none;
+            transition: color .2s, border-color .2s, transform .2s, background .2s;
+            letter-spacing: .4px;
+        }
+        .ep-back:hover {
+            border-color: var(--ep-orange);
+            color: var(--ep-orange);
+            background: var(--ep-orange-dim);
+            transform: translateX(-3px);
+        }
+
+        /* ── Page header ── */
+        .ep-page-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .ep-icon-box {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            background: var(--ep-orange-dim);
+            border: 1.5px solid var(--ep-orange);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .ep-icon-box i { color: var(--ep-orange); font-size: 24px; }
+        .ep-page-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 4px;
+        }
+        .ep-page-sub {
+            font-size: 11px;
+            color: var(--ep-muted);
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        /* ── Cards ── */
+        .ep-card {
+            background: var(--ep-surface);
+            border: 1px solid var(--ep-border);
+            border-radius: var(--ep-radius-lg);
+            overflow: hidden;
+            margin-bottom: 14px;
+            transition: border-color .2s;
+        }
+        .ep-card:hover { border-color: var(--ep-border-2); }
+
+        .ep-card-header {
+            padding: 13px 22px;
+            border-bottom: 1px solid #1a1e28;
+            background: #0f1218;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .ep-section-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--ep-orange);
+            flex-shrink: 0;
+        }
+        .ep-section-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--ep-orange);
+        }
+
+        .ep-card-body { padding: 22px; }
+
+        /* ── Labels ── */
+        .acm-label,
+        .ep-label {
+            display: block;
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase !important;
+            color: var(--ep-muted) !important;
+            margin-bottom: 7px !important;
+        }
+
+        /* ── Inputs / selects / textareas ── */
+        .acm-input {
+            width: 100%;
+            background: var(--ep-surface-2) !important;
+            border: 1px solid var(--ep-border) !important;
+            border-radius: var(--ep-radius) !important;
+            color: var(--ep-text) !important;
+            font-family: 'Rajdhani', sans-serif !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            padding: 11px 14px !important;
+            outline: none !important;
+            transition: border-color .2s, box-shadow .2s, background .2s !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+        }
+        .acm-input:hover  { border-color: var(--ep-border-2) !important; }
+        .acm-input:focus  {
+            border-color: var(--ep-orange) !important;
+            background: #0e1015 !important;
+            box-shadow: 0 0 0 3px var(--ep-orange-dim) !important;
+        }
+        .acm-input.border-danger {
+            border-color: var(--ep-red) !important;
+            box-shadow: 0 0 0 3px rgba(248,113,113,.12) !important;
+        }
+        textarea.acm-input { resize: vertical; min-height: 88px; line-height: 1.6 !important; }
+        select.acm-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%235a627a' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+            padding-right: 36px !important;
+        }
+        select.acm-input option { background: #13161e; color: var(--ep-text); }
+
+        /* ── Validation text ── */
+        .text-danger { color: var(--ep-red) !important; font-size: 11px !important; letter-spacing: .3px; }
+
+        /* ── Input with icon prefix ── */
+        .ep-input-wrap { position: relative; }
+        .ep-input-wrap .acm-input { padding-left: 38px !important; }
+        .ep-input-icon {
+            position: absolute;
+            left: 12px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--ep-muted-2);
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        /* ── Imagen — Opción C ── */
+        .ep-img-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .ep-img-frame {
+            width: 170px; height: 170px;
+            background: var(--ep-surface-2);
+            border: 1px solid var(--ep-border);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        .ep-img-frame:hover { border-color: var(--ep-border-2); }
+        #previewImagen {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            display: none;
+            border-radius: 0 !important;
+            border: none !important;
+            max-width: none !important;
+            max-height: none !important;
+        }
+        .ep-img-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .ep-img-empty i { font-size: 36px; color: var(--ep-muted-2); }
+        .ep-img-empty span { font-size: 11px; color: var(--ep-muted-2); letter-spacing: .5px; }
+        .ep-img-badge {
+            position: absolute;
+            top: 8px; left: 8px;
+            background: rgba(255,107,26,.85);
+            color: #fff;
+            font-size: 8px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+        .ep-img-pills { display: flex; gap: 8px; }
+        .ep-pill {
+            background: var(--ep-surface-2);
+            border: 1px solid var(--ep-border);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 10px;
+            color: var(--ep-muted);
+            display: flex; align-items: center; gap: 5px;
+        }
+        .ep-pill.ok { border-color: rgba(74,222,128,.25); color: var(--ep-green); background: rgba(74,222,128,.06); }
+        .ep-pill i { font-size: 11px; }
+
+        .ep-img-divider { height: 1px; background: #1a1e28; margin: 16px 0; }
+
+        .ep-img-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+        .ep-img-btn {
+            background: var(--ep-surface-2);
+            border: 1px solid var(--ep-border);
+            border-radius: 8px;
+            color: var(--ep-muted);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 14px;
+            display: inline-flex; align-items: center; gap: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color .2s, color .2s;
+            letter-spacing: .3px;
+        }
+        .ep-img-btn:hover { border-color: var(--ep-orange); color: var(--ep-orange); }
+        .ep-img-btn i { font-size: 13px; }
+
+        .ep-img-hint {
+            font-size: 11px;
+            color: var(--ep-muted-2);
+            margin-top: 6px;
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        /* ── Precio — prefijo COP ── */
+        .ep-prefix-wrap { position: relative; }
+        .ep-prefix {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 52px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--ep-orange);
+            border-right: 1px solid var(--ep-border);
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+        .ep-prefix-wrap .acm-input { padding-left: 60px !important; }
+
+        /* ── Stock — barra de nivel ── */
+        .ep-stock-bar-wrap { margin-top: 8px; }
+        .ep-stock-track {
+            height: 3px;
+            background: #1a1e28;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .ep-stock-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--ep-orange);
+            border-radius: 2px;
+            transition: width .5s ease;
+        }
+        .ep-stock-hint {
+            font-size: 10px;
+            color: var(--ep-muted-2);
+            margin-top: 5px;
+            letter-spacing: .3px;
+        }
+
+        /* ── Historial ── */
+        .ep-historial {
+            border: 1px solid var(--ep-border);
+            border-radius: var(--ep-radius);
+            background: var(--ep-surface-2);
+            padding: 12px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-size: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--ep-border-2) transparent;
+        }
+        .ep-historial-row { margin-bottom: 5px; color: var(--ep-text); }
+        .ep-historial-date { color: var(--ep-muted); }
+        .ep-historial-old  { color: var(--ep-red); }
+        .ep-historial-new  { color: var(--ep-green); }
+
+        /* ── Action buttons ── */
+        .ep-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-top: 4px;
+        }
+        .acm-btn-primary {
+            background: var(--ep-orange) !important;
+            border: none !important;
+            border-radius: var(--ep-radius) !important;
+            color: #fff !important;
+            font-family: 'Rajdhani', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            padding: 11px 28px !important;
+            letter-spacing: .8px !important;
+            text-transform: uppercase !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            cursor: pointer !important;
+            transition: transform .2s, box-shadow .2s !important;
+            text-decoration: none !important;
+        }
+        .acm-btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 22px var(--ep-orange-glow) !important;
+            color: #fff !important;
+        }
+        .acm-btn-primary:active { transform: translateY(0) !important; }
+
+        .acm-btn-outline {
+            background: transparent !important;
+            border: 1px solid var(--ep-border) !important;
+            border-radius: var(--ep-radius) !important;
+            color: var(--ep-muted) !important;
+            font-family: 'Rajdhani', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            padding: 11px 20px !important;
+            letter-spacing: .5px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 7px !important;
+            cursor: pointer !important;
+            transition: border-color .2s, color .2s !important;
+            text-decoration: none !important;
+        }
+        .acm-btn-outline:hover {
+            border-color: var(--ep-border-2) !important;
+            color: var(--ep-text) !important;
+        }
+        .acm-btn-sm { padding: 7px 14px !important; font-size: 12px !important; }
+    </style>
+</head>
+
+<body>
+    <main class="acm-main" style="padding-top:80px">
+        <div class="container" style="max-width:680px">
+
+            <a th:href="@{/productos/catalogo}" class="ep-back mb-4 d-inline-flex">
+                <i class="bi bi-arrow-left"></i> Volver al catálogo
+            </a>
+
+            <!-- Page header -->
+            <div class="ep-page-header">
+                <div class="ep-icon-box">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <div>
+                    <h1 class="ep-page-title"
+                        th:text="${edicion} ? 'Editar Producto' : 'Nuevo Producto'">Producto</h1>
+                    <p class="ep-page-sub"
+                        th:text="${edicion} ? 'Modifica los datos del ítem en el catálogo' : 'Registra un nuevo ítem en el catálogo'"></p>
+                </div>
+            </div>
+
+            <!-- ── FORM ── -->
+            <form th:action="${edicion} ? @{'/productos/editar/' + ${productoId}} : @{/productos/nuevo}"
+                th:object="${producto}" method="post" novalidate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <!-- ══ SECCIÓN 1: Información general ══ -->
+                <div class="ep-card">
+                    <div class="ep-card-header">
+                        <span class="ep-section-dot"></span>
+                        <span class="ep-section-label">Información general</span>
+                    </div>
+                    <div class="ep-card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="ep-label">Nombre *</label>
+                                <div class="ep-input-wrap">
+                                    <i class="bi bi-tag ep-input-icon"></i>
+                                    <input type="text" th:field="*{nombre}" class="acm-input"
+                                        th:classappend="${#fields.hasErrors('nombre')} ? 'border-danger'"
+                                        placeholder="Nombre del producto" />
+                                </div>
+                                <div class="text-danger mt-1"
+                                    th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></div>
+                            </div>
+                            <div class="col-12">
+                                <label class="ep-label">Descripción</label>
+                                <textarea th:field="*{descripcion}" class="acm-input" rows="3"
+                                    placeholder="Descripción del producto..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="ep-label">Categoría *</label>
+                                <div class="ep-input-wrap">
+                                    <i class="bi bi-grid ep-input-icon"></i>
+                                    <select th:field="*{idCategoria}" class="acm-input" style="padding-left:38px!important">
+                                        <option value="">— Selecciona —</option>
+                                        <option th:each="c : ${categorias}" th:value="${c.id}"
+                                            th:text="${c.nombre}">Cat</option>
+                                    </select>
+                                </div>
+                                <div class="text-danger mt-1"
+                                    th:if="${#fields.hasErrors('idCategoria')}" th:errors="*{idCategoria}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ SECCIÓN 2: Imagen del producto — Opción C ══ -->
+                <div class="ep-card">
+                    <div class="ep-card-header">
+                        <span class="ep-section-dot"></span>
+                        <span class="ep-section-label">Imagen del producto</span>
+                    </div>
+                    <div class="ep-card-body">
+
+                        <!-- Preview centrado grande -->
+                        <div class="ep-img-center">
+                            <div class="ep-img-frame" id="imgFrame">
+                                <img id="previewImagen" alt="Vista previa"
+                                    th:src="${producto.rutaImagen != null and !#strings.isEmpty(producto.rutaImagen)} ? ${producto.rutaImagen} : null" />
+                                <div class="ep-img-empty" id="imgEmpty">
+                                    <i class="bi bi-image"></i>
+                                    <span>Sin imagen</span>
+                                </div>
+                                <span class="ep-img-badge" id="imgBadge" style="display:none">Vista previa</span>
+                            </div>
+                            <!-- Pills de estado -->
+                            <div class="ep-img-pills" id="imgPills" style="display:none">
+                                <div class="ep-pill ok" id="pillValida">
+                                    <i class="bi bi-check-circle"></i> URL válida
+                                </div>
+                                <div class="ep-pill" id="pillFormato">
+                                    <i class="bi bi-file-image"></i> <span id="pillFormatoTxt">.jpg</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ep-img-divider"></div>
+
+                        <!-- Campo URL -->
+                        <label class="ep-label">URL de la imagen</label>
+                        <div class="ep-input-wrap">
+                            <i class="bi bi-link-45deg ep-input-icon"></i>
+                            <input type="text" id="rutaImagenInput" th:field="*{rutaImagen}" class="acm-input"
+                                th:classappend="${#fields.hasErrors('rutaImagen')} ? 'border-danger'"
+                                placeholder="https://midominio.com/imagenes/producto.jpg"
+                                oninput="actualizarPreviewImagen(this.value)" />
+                        </div>
+                        <div class="text-danger mt-1"
+                            th:if="${#fields.hasErrors('rutaImagen')}" th:errors="*{rutaImagen}"></div>
+                        <p class="ep-img-hint">
+                            <i class="bi bi-info-circle"></i>
+                            Debe ser un link directo a la imagen (termina en .jpg, .png, .webp, etc.)
+                        </p>
+
+                        <!-- Acciones rápidas -->
+                        <div class="ep-img-actions">
+                            <button type="button" class="ep-img-btn" onclick="limpiarImagen()">
+                                <i class="bi bi-trash"></i> Eliminar imagen
+                            </button>
+                            <button type="button" class="ep-img-btn" id="btnAbrirUrl"
+                                onclick="abrirUrlImagen()" style="display:none">
+                                <i class="bi bi-box-arrow-up-right"></i> Abrir URL
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ══ SECCIÓN 3: Precio y código ══ -->
+                <div class="ep-card">
+                    <div class="ep-card-header">
+                        <span class="ep-section-dot"></span>
+                        <span class="ep-section-label">Precio y código</span>
+                    </div>
+                    <div class="ep-card-body">
+                        <div class="row g-3">
+                            <div class="col-sm-5">
+                                <label class="ep-label">Código</label>
+                                <div class="ep-input-wrap">
+                                    <i class="bi bi-upc ep-input-icon"></i>
+                                    <input type="text" th:field="*{codigo}" class="acm-input"
+                                        th:classappend="${#fields.hasErrors('codigo')} ? 'border-danger'"
+                                        placeholder="ACM-001" />
+                                </div>
+                                <div class="text-danger mt-1"
+                                    th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <label class="ep-label">Precio unitario *</label>
+                                <div class="ep-prefix-wrap">
+                                    <span class="ep-prefix">COP</span>
+                                    <input type="number" th:field="*{precioUnitario}" class="acm-input"
+                                        step="0.01" min="0" placeholder="0.00" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ SECCIÓN 4: Stock y estado ══ -->
+                <div class="ep-card">
+                    <div class="ep-card-header">
+                        <span class="ep-section-dot"></span>
+                        <span class="ep-section-label">Stock y estado</span>
+                    </div>
+                    <div class="ep-card-body">
+                        <div class="row g-3">
+                            <div class="col-sm-4">
+                                <label class="ep-label">Stock actual *</label>
+                                <div class="ep-input-wrap">
+                                    <i class="bi bi-boxes ep-input-icon"></i>
+                                    <input type="number" th:field="*{stockActual}" class="acm-input"
+                                        min="0" id="stockActualInput"
+                                        oninput="actualizarBarraStock()" />
+                                </div>
+                                <div class="ep-stock-bar-wrap">
+                                    <div class="ep-stock-track">
+                                        <div class="ep-stock-fill" id="stockFill"></div>
+                                    </div>
+                                    <div class="ep-stock-hint" id="stockHint"></div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="ep-label">Stock mínimo</label>
+                                <div class="ep-input-wrap">
+                                    <i class="bi bi-arrow-down-circle ep-input-icon"></i>
+                                    <input type="number" th:field="*{stockMinimo}" class="acm-input" min="0"
+                                        id="stockMinimoInput" oninput="actualizarBarraStock()" />
+                                </div>
+                            </div>
+                            <div class="col-sm-4" th:if="${edicion}">
+                                <label class="ep-label">Estado</label>
+                                <div class="ep-input-wrap">
+                                    <i class="bi bi-circle ep-input-icon"></i>
+                                    <select th:field="*{estado}" class="acm-input" style="padding-left:38px!important">
+                                        <option value="Disponible">Disponible</option>
+                                        <option value="Agotado">Agotado</option>
+                                        <option value="Descontinuado">Descontinuado</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ SECCIÓN 5: Historial de cambios (solo en edición) ══ -->
+                <div th:if="${edicion and historial != null and !historial.isEmpty()}" class="ep-card">
+                    <div class="ep-card-header">
+                        <span class="ep-section-dot"></span>
+                        <span class="ep-section-label">Historial de cambios</span>
+                    </div>
+                    <div class="ep-card-body">
+                        <div class="ep-historial">
+                            <div th:each="h : ${historial}" class="ep-historial-row">
+                                <span class="ep-historial-date"
+                                    th:text="${#temporals.format(h.fecha,'dd/MM/yyyy HH:mm')}"></span>
+                                · <strong th:text="${h.campoModificado}"></strong>:
+                                <span class="ep-historial-old" th:text="${h.valorAnterior}"></span>
+                                → <span class="ep-historial-new" th:text="${h.valorNuevo}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ Acciones finales ══ -->
+                <div class="ep-actions mt-3">
+                    <button type="submit" class="acm-btn acm-btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        <span th:text="${edicion} ? 'Guardar cambios' : 'Registrar producto'">Guardar</span>
+                    </button>
+                    <a th:href="@{/productos/catalogo}" class="acm-btn acm-btn-outline">Cancelar</a>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/acmafer.js}"></script>
+    <script th:src="@{/js/i18n.js}"></script>
+    <script>
+        /* ── Preview de imagen (Opción C) ── */
+        function actualizarPreviewImagen(url) {
+            var img    = document.getElementById('previewImagen');
+            var empty  = document.getElementById('imgEmpty');
+            var badge  = document.getElementById('imgBadge');
+            var pills  = document.getElementById('imgPills');
+            var btnUrl = document.getElementById('btnAbrirUrl');
+            var fmtTxt = document.getElementById('pillFormatoTxt');
+
+            if (url && url.trim() !== '') {
+                img.src = url.trim();
+                img.style.display = 'block';
+                empty.style.display  = 'none';
+                badge.style.display  = 'block';
+                pills.style.display  = 'flex';
+                btnUrl.style.display = 'inline-flex';
+                var ext = url.trim().split('.').pop().split('?')[0].toLowerCase();
+                fmtTxt.textContent = '.' + ext;
+            } else {
+                img.style.display    = 'none';
+                img.src              = '';
+                empty.style.display  = 'flex';
+                badge.style.display  = 'none';
+                pills.style.display  = 'none';
+                btnUrl.style.display = 'none';
+            }
+        }
+
+        function limpiarImagen() {
+            document.getElementById('rutaImagenInput').value = '';
+            actualizarPreviewImagen('');
+        }
+
+        function abrirUrlImagen() {
+            var url = document.getElementById('rutaImagenInput').value.trim();
+            if (url) window.open(url, '_blank');
+        }
+
+        /* ── Barra de stock ── */
+        function actualizarBarraStock() {
+            var actual  = parseInt(document.getElementById('stockActualInput').value) || 0;
+            var minimo  = parseInt(document.getElementById('stockMinimoInput').value) || 0;
+            var fill    = document.getElementById('stockFill');
+            var hint    = document.getElementById('stockHint');
+            if (minimo <= 0) { fill.style.width = '0%'; hint.textContent = ''; return; }
+            var pct = Math.min(100, Math.round((actual / (minimo * 3)) * 100));
+            fill.style.width = pct + '%';
+            fill.style.background = actual <= minimo
+                ? '#f87171'
+                : actual <= minimo * 1.5
+                    ? '#fbbf24'
+                    : '#ff6b1a';
+            hint.textContent = actual <= minimo ? '⚠ Por debajo del mínimo' : actual + ' uds. en stock';
+        }
+
+        /* ── Init al cargar ── */
+        document.addEventListener('DOMContentLoaded', function () {
+            var input = document.getElementById('rutaImagenInput');
+            if (input && input.value) actualizarPreviewImagen(input.value);
+            actualizarBarraStock();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+target/
+.git/
+.nbproject/
+nbproject/
+build/
+dist/
+.vscode/
+*.war

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nueva Tarea — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+    <style>
+        /* ── NUEVA TAREA — REDISEÑO ESTILO CHECKOUT ───────────────────── */
+
+        /* ── Theme variables (sincronizado con data-theme del navbar) ── */
+        :root,
+        [data-theme="dark"] {
+            --nt-bg: #0b0b0f;
+            --nt-card-bg: #111117;
+            --nt-card-border: #1e1e28;
+            --nt-section-border: #1a1a24;
+            --nt-input-bg: #0d0d12;
+            --nt-input-border: #252530;
+            --nt-actions-bg: #0d0d12;
+            --nt-text-1: #f0f0f0;
+            --nt-text-2: #e8e8ec;
+            --nt-text-3: #aaaaaa;
+            --nt-text-4: #888888;
+            --nt-text-5: #666666;
+            --nt-text-6: #3a3a48;
+            --nt-btn-ghost-text: #666666;
+        }
+        [data-theme="light"] {
+            --nt-bg: #f4f1ec;
+            --nt-card-bg: #ffffff;
+            --nt-card-border: rgba(20,15,10,.12);
+            --nt-section-border: rgba(20,15,10,.1);
+            --nt-input-bg: #ffffff;
+            --nt-input-border: rgba(20,15,10,.18);
+            --nt-actions-bg: #f6f2ec;
+            --nt-text-1: #1f1a15;
+            --nt-text-2: #1f1a15;
+            --nt-text-3: #46403a;
+            --nt-text-4: #66605a;
+            --nt-text-5: #8a8378;
+            --nt-text-6: #a39c8f;
+            --nt-btn-ghost-text: #66605a;
+        }
+
+        .nt-wrapper {
+            min-height: 100vh;
+            background: var(--nt-bg);
+            padding-top: 96px;
+            padding-bottom: 60px;
+            transition: background .3s ease;
+        }
+
+        .nt-shell {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Back link */
+        .nt-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--nt-text-4);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color .2s;
+            margin-bottom: 32px;
+        }
+        .nt-back:hover { color: #ff6a00; }
+        .nt-back i { font-size: 14px; }
+
+        /* Header */
+        .nt-header {
+            margin-bottom: 28px;
+        }
+        .nt-header-eyebrow {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: #ff6a00;
+            margin-bottom: 8px;
+        }
+        .nt-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(22px, 4vw, 30px);
+            font-weight: 700;
+            color: var(--nt-text-1);
+            margin: 0 0 6px;
+            letter-spacing: .02em;
+        }
+        .nt-header p {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: var(--nt-text-5);
+            margin: 0;
+            font-weight: 400;
+        }
+
+        /* Alert */
+        .nt-alert {
+            background: rgba(220, 38, 38, .12);
+            border: 1px solid rgba(220, 38, 38, .35);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Card */
+        .nt-card {
+            background: var(--nt-card-bg);
+            border: 1px solid var(--nt-card-border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: background .3s ease, border-color .3s ease;
+        }
+
+        /* Section blocks inside card */
+        .nt-section {
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--nt-section-border);
+            position: relative;
+        }
+        .nt-section:last-child { border-bottom: none; }
+
+        .nt-section-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: #ff6a00;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nt-section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, #ff6a0030, transparent);
+        }
+
+        /* Field */
+        .nt-field { margin-bottom: 18px; }
+        .nt-field:last-child { margin-bottom: 0; }
+
+        .nt-label {
+            display: block;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--nt-text-3);
+            margin-bottom: 7px;
+        }
+        .nt-label .nt-req { color: #ff6a00; margin-left: 2px; }
+
+        .nt-input,
+        .nt-textarea,
+        .nt-select {
+            width: 100%;
+            background: var(--nt-input-bg);
+            border: 1px solid var(--nt-input-border);
+            border-radius: 8px;
+            color: var(--nt-text-2);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 400;
+            padding: 10px 14px;
+            transition: border-color .2s, box-shadow .2s, background .3s ease;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .nt-textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+        .nt-select { cursor: pointer; }
+
+        .nt-input:focus,
+        .nt-textarea:focus,
+        .nt-select:focus {
+            border-color: #ff6a00;
+            box-shadow: 0 0 0 3px rgba(255,106,0,.12);
+        }
+        .nt-input::placeholder,
+        .nt-textarea::placeholder { color: var(--nt-text-6); }
+        .nt-input.is-invalid,
+        .nt-textarea.is-invalid { border-color: #dc2626; }
+
+        .nt-error {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            color: #f87171;
+            margin-top: 5px;
+        }
+
+        /* Two-column row */
+        .nt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media(max-width:480px){ .nt-row { grid-template-columns: 1fr; } }
+
+        /* Priority pills inside select visual indicator — kept simple */
+        .nt-priority-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+
+        /* Actions */
+        .nt-actions {
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--nt-actions-bg);
+            transition: background .3s ease;
+        }
+
+        .nt-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ff6a00;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 12px 28px;
+            cursor: pointer;
+            transition: background .2s, transform .1s, box-shadow .2s;
+            text-decoration: none;
+        }
+        .nt-btn-primary:hover {
+            background: #e05d00;
+            box-shadow: 0 4px 20px rgba(255,106,0,.35);
+            color: #fff;
+        }
+        .nt-btn-primary:active { transform: scale(.97); }
+
+        .nt-btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            color: var(--nt-btn-ghost-text);
+            border: 1px solid var(--nt-input-border);
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 11px 20px;
+            cursor: pointer;
+            transition: border-color .2s, color .2s;
+            text-decoration: none;
+        }
+        .nt-btn-ghost:hover { border-color: #ff6a00; color: #ff6a00; }
+
+        /* Comment section slide */
+        #nt-comment-section {
+            overflow: hidden;
+            transition: max-height .3s ease, opacity .3s ease;
+        }
+        #nt-comment-section.nt-hidden {
+            max-height: 0 !important;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        /* Date input fix */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(.4) sepia(1) saturate(3) hue-rotate(0deg);
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particlesBg"></canvas>
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+
+    <main class="nt-wrapper">
+        <div class="nt-shell">
+
+            <a th:href="@{/tareas/admin}" class="nt-back">
+                <i class="bi bi-arrow-left"></i> Volver a tareas
+            </a>
+
+            <div class="nt-header">
+                <div class="nt-header-eyebrow">// ACMAFER · GESTIÓN DE TAREAS</div>
+                <h1><i class="bi bi-plus-circle me-2"></i>Nueva Tarea</h1>
+                <p>Completa los datos y asigna a un trabajador.</p>
+            </div>
+
+            <div class="nt-alert" th:if="${error}">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <div class="nt-card">
+                <form th:action="@{/tareas/nueva}" th:object="${dto}" method="post" novalidate>
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <!-- Información principal -->
+                    <div class="nt-section">
+                        <div class="nt-section-label"><i class="bi bi-file-text"></i> Información de la tarea</div>
+
+                        <div class="nt-field">
+                            <label class="nt-label">Título <span class="nt-req">*</span></label>
+                            <input type="text" th:field="*{titulo}"
+                                th:classappend="${#fields.hasErrors('titulo')} ? 'is-invalid'"
+                                class="nt-input"
+                                placeholder="Ej: Mantenimiento torno CNC #3" />
+                            <div class="nt-error" th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}"></div>
+                        </div>
+
+                        <div class="nt-field">
+                            <label class="nt-label">Descripción</label>
+                            <textarea th:field="*{descripcion}" class="nt-textarea"
+                                placeholder="Detalla el trabajo a realizar..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Prioridad y fecha -->
+                    <div class="nt-section">
+                        <div class="nt-section-label"><i class="bi bi-sliders"></i> Configuración</div>
+
+                        <div class="nt-row">
+                            <div class="nt-field">
+                                <label class="nt-label">Prioridad</label>
+                                <select th:field="*{prioridad}" class="nt-select">
+                                    <option value="ALTA">🔴 Alta</option>
+                                    <option value="MEDIA" selected>🟡 Media</option>
+                                    <option value="BAJA">🟢 Baja</option>
+                                </select>
+                            </div>
+                            <div class="nt-field">
+                                <label class="nt-label">Fecha de vencimiento</label>
+                                <input type="date" th:field="*{fechaVencimiento}" class="nt-input" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asignación -->
+                    <div class="nt-section">
+                        <div class="nt-section-label"><i class="bi bi-person-badge"></i> Asignación</div>
+
+                        <div class="nt-field">
+                            <label class="nt-label">Asignar a trabajador</label>
+                            <select th:field="*{idEmpleado}" class="nt-select" id="nt-empleado-select">
+                                <option value="">— Asignar más tarde —</option>
+                                <option th:each="t : ${trabajadores}" th:value="${t.id}"
+                                    th:text="${t.nombreCompleto + ' (' + t.email + ')'}">Trabajador</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Comentario (condicional) -->
+                    <div class="nt-section" id="nt-comment-section"
+                        th:classappend="${dto.idEmpleado == null} ? 'nt-hidden'">
+                        <div class="nt-section-label"><i class="bi bi-chat-left-text"></i> Instrucciones</div>
+                        <div class="nt-field">
+                            <label class="nt-label">Comentario para el trabajador</label>
+                            <textarea th:field="*{comentarioAdmin}" class="nt-textarea"
+                                placeholder="Instrucciones adicionales, herramientas necesarias, notas..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="nt-actions">
+                        <button type="submit" class="nt-btn-primary">
+                            <i class="bi bi-check-circle-fill"></i> Crear tarea
+                        </button>
+                        <a th:href="@{/tareas/admin}" class="nt-btn-ghost">
+                            <i class="bi bi-x"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/acmafer.js}"></script>
+    <script>
+        const empleadoSel = document.getElementById('nt-empleado-select');
+        const commentSection = document.getElementById('nt-comment-section');
+
+        function toggleComment() {
+            if (empleadoSel.value) {
+                commentSection.style.maxHeight = commentSection.scrollHeight + 200 + 'px';
+                commentSection.classList.remove('nt-hidden');
+            } else {
+                commentSection.classList.add('nt-hidden');
+                commentSection.style.maxHeight = '0';
+            }
+        }
+
+        empleadoSel.addEventListener('change', toggleComment);
+
+        // Init on load
+        if (empleadoSel.value) {
+            commentSection.style.maxHeight = '400px';
+            commentSection.classList.remove('nt-hidden');
+        }
+    </script>
+
+    <div th:replace="~{layout/navbar :: chatbot}"></div>
+    <div th:replace="~{layout/navbar :: cartNotif}"></div>
+    <footer th:replace="~{layout/navbar :: footer}"></footer>
+    <th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+
+</html>

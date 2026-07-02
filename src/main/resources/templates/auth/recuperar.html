@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recuperar contraseña — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+    <style>
+        /* ════════════════════════════════════════════
+           ACMAFER GLASS INDUSTRIAL — sistema wk-
+           Aplicado a Recuperar contraseña.
+        ════════════════════════════════════════════ */
+
+        @keyframes wkGlowPulse {
+            0%, 100% { opacity: .55; }
+            50% { opacity: 1; }
+        }
+        @keyframes wkFloatUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes wkEmberDrift {
+            0%   { transform: translate(0,0) scale(1); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: .6; }
+            100% { transform: translate(var(--dx,20px), -140px) scale(.3); opacity: 0; }
+        }
+        @keyframes wkBorderFlow {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        :root,
+        [data-theme="dark"] {
+            --wk-bg1: #08080f; --wk-bg2: #0b0814; --wk-bg3: #080c14;
+            --wk-surface: rgba(255,255,255,.025);
+            --wk-surface-2: rgba(255,255,255,.04);
+            --wk-border: rgba(255,255,255,.07);
+            --wk-border-2: rgba(255,255,255,.1);
+            --wk-border-3: rgba(255,255,255,.12);
+            --wk-text-1: #f0f0f8;
+            --wk-text-2: #b0b0c8;
+            --wk-text-3: #999999;
+            --wk-text-4: #666666;
+            --wk-text-5: #3a3a55;
+            --wk-shadow: rgba(0,0,0,.35);
+            --wk-fire-1: #ff6a00;
+            --wk-fire-2: #cc7032;
+            --wk-spark: #ffb347;
+        }
+        [data-theme="light"] {
+            --wk-bg1: #f4f1ec; --wk-bg2: #efe9e0; --wk-bg3: #f6f2ec;
+            --wk-surface: rgba(255,255,255,.65);
+            --wk-surface-2: rgba(255,255,255,.8);
+            --wk-border: rgba(20,15,10,.08);
+            --wk-border-2: rgba(20,15,10,.12);
+            --wk-border-3: rgba(20,15,10,.14);
+            --wk-text-1: #1f1a15;
+            --wk-text-2: #46403a;
+            --wk-text-3: #66605a;
+            --wk-text-4: #8a8378;
+            --wk-text-5: #a39c8f;
+            --wk-shadow: rgba(30,20,10,.1);
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 32px;
+            background: linear-gradient(135deg, var(--wk-bg1) 0%, var(--wk-bg2) 50%, var(--wk-bg3) 100%);
+            position: relative;
+            overflow-x: hidden;
+            transition: background .3s ease;
+        }
+        body::before {
+            content: '';
+            position: fixed; top: -120px; left: -120px;
+            width: 560px; height: 560px;
+            background: radial-gradient(circle, rgba(255,106,0,.09), transparent 65%);
+            pointer-events: none; z-index: 0;
+            animation: wkGlowPulse 6s ease-in-out infinite;
+        }
+        [data-theme="light"] body::before { background: radial-gradient(circle, rgba(255,106,0,.13), transparent 65%); }
+        body::after {
+            content: '';
+            position: fixed; bottom: -100px; right: -100px;
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(59,130,246,.06), transparent 65%);
+            pointer-events: none; z-index: 0;
+            animation: wkGlowPulse 7s ease-in-out infinite 1.5s;
+        }
+        [data-theme="light"] body::after { background: radial-gradient(circle, rgba(59,130,246,.09), transparent 65%); }
+
+        .wk-embers { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .wk-ember {
+            position: absolute; bottom: -10px;
+            width: 3px; height: 3px; border-radius: 50%;
+            background: #ff8c3a;
+            box-shadow: 0 0 6px 2px rgba(255,106,0,.7);
+            animation: wkEmberDrift linear infinite;
+        }
+        [data-theme="light"] .wk-ember { opacity: .55; }
+
+        .wk-rec-wrap {
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+            animation: wkFloatUp .5s ease both;
+        }
+
+        .wk-rec-brand { text-align: center; margin-bottom: 22px; }
+        .wk-rec-eyebrow {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+            color: var(--wk-fire-1); margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .wk-rec-eyebrow .dot {
+            width: 6px; height: 6px; border-radius: 50%; background: var(--wk-fire-1);
+            box-shadow: 0 0 8px var(--wk-fire-1);
+            animation: wkGlowPulse 1.6s ease-in-out infinite;
+        }
+        .wk-rec-icon {
+            width: 60px; height: 60px; border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: color-mix(in srgb, var(--wk-fire-1) 14%, transparent);
+            border: 1px solid color-mix(in srgb, var(--wk-fire-1) 30%, transparent);
+        }
+        .wk-rec-icon i { font-size: 26px; color: var(--wk-fire-1); filter: drop-shadow(0 0 8px rgba(255,106,0,.5)); }
+        .wk-rec-brand h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px; font-weight: 900; letter-spacing: .5px;
+            margin: 4px 0 6px;
+            background: linear-gradient(90deg, var(--wk-text-1), #ffd9b3 60%, #ff8c3a);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .wk-rec-brand p {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13.5px; font-weight: 600;
+            color: var(--wk-text-4);
+            margin: 0;
+        }
+
+        .wk-card {
+            background: linear-gradient(160deg, rgba(255,106,0,.05), var(--wk-surface));
+            border: 1px solid var(--wk-border-2);
+            border-radius: 18px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        [data-theme="light"] .wk-card { box-shadow: 0 4px 24px var(--wk-shadow); }
+        .wk-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--wk-fire-1), var(--wk-spark), var(--wk-fire-1), transparent);
+            background-size: 200% 100%;
+            animation: wkBorderFlow 4s linear infinite;
+        }
+        .wk-card-body { padding: 28px 30px; position: relative; z-index: 1; }
+
+        .wk-alert {
+            display: flex; align-items: center; gap: 10px;
+            padding: .7rem 1rem;
+            border-radius: 10px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: .88rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .wk-alert-danger {
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.3);
+            color: #f87171;
+        }
+
+        .wk-field { margin-bottom: 1.4rem; }
+        .wk-label {
+            display: block;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .14em; text-transform: uppercase;
+            color: var(--wk-text-4);
+            margin-bottom: 8px;
+        }
+        .wk-input-group { position: relative; }
+        .wk-input {
+            width: 100%;
+            padding: .8rem 1rem .8rem 2.6rem;
+            background: var(--wk-surface-2);
+            border: 1px solid var(--wk-border-2);
+            border-radius: 10px;
+            color: var(--wk-text-1);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: .95rem;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        .wk-input::placeholder { color: var(--wk-text-5); }
+        .wk-input:focus {
+            outline: none;
+            border-color: rgba(255,106,0,.45);
+            box-shadow: 0 0 0 3px rgba(255,106,0,.12);
+            background: var(--wk-surface);
+        }
+        .wk-input-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--wk-text-5); font-size: 15px;
+        }
+
+        .wk-btn-primary {
+            width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--wk-fire-1), var(--wk-fire-2));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: .95rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all .2s ease;
+            box-shadow: 0 6px 20px rgba(255, 106, 0, .35);
+        }
+        .wk-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 106, 0, .5);
+        }
+
+        .wk-rec-back {
+            text-align: center;
+            margin-top: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13.5px;
+            color: var(--wk-text-4);
+        }
+        .wk-rec-back a {
+            color: var(--wk-fire-1);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .wk-rec-back a:hover { text-decoration: underline; }
+    </style>
+</head>
+
+<body>
+    <canvas id="particlesBg"></canvas>
+    <div class="wk-embers" id="wkEmbers"></div>
+
+    <div class="wk-rec-wrap">
+
+        <div class="wk-rec-brand">
+            <a th:href="@{/}" style="text-decoration:none">
+                <div class="wk-rec-eyebrow"><span class="dot"></span>// ACMAFER · RECUPERACIÓN</div>
+            </a>
+            <div class="wk-rec-icon"><i class="bi bi-shield-lock"></i></div>
+            <h2><span data-i18n="rec_title">Recuperar contraseña</span></h2>
+            <p><span data-i18n="rec_subtitle">Ingresa tu correo y te enviaremos un código de verificación.</span></p>
+        </div>
+
+        <div class="wk-card">
+            <div class="wk-card-body">
+                <div class="wk-alert wk-alert-danger" th:if="${error}">
+                    <i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span>
+                </div>
+
+                <form th:action="@{/auth/recuperar}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <div class="wk-field">
+                        <label class="wk-label" data-i18n="rec_email_label">Correo registrado</label>
+                        <div class="wk-input-group">
+                            <input type="email" name="email" class="wk-input" placeholder="correo@acmafer.com"
+                                required autocomplete="email" />
+                            <i class="bi bi-envelope wk-input-icon"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="wk-btn-primary">
+                        <i class="bi bi-send"></i> <span data-i18n="rec_btn">Enviar código</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <p class="wk-rec-back">
+            <a th:href="@{/auth/login}">
+                <i class="bi bi-arrow-left me-1"></i><span data-i18n="rec_back">Volver al login</span>
+            </a>
+        </p>
+    </div>
+
+    <!-- Selector de idioma flotante -->
+    <div class="lang-switcher-float" id="langSwitcher"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script>
+        // Brasas flotantes decorativas (mismo patrón que trabajador.html / login.html)
+        (function wkEmbers() {
+            const container = document.getElementById('wkEmbers');
+            if (!container) return;
+            const count = 14;
+            for (let i = 0; i < count; i++) {
+                const ember = document.createElement('div');
+                ember.className = 'wk-ember';
+                const left = Math.random() * 100;
+                const duration = 6 + Math.random() * 6;
+                const delay = Math.random() * 8;
+                const dx = (Math.random() - 0.5) * 60;
+                ember.style.left = left + 'vw';
+                ember.style.setProperty('--dx', dx + 'px');
+                ember.style.animationDuration = duration + 's';
+                ember.style.animationDelay = delay + 's';
+                container.appendChild(ember);
+            }
+        })();
+    </script>
+</body>
+
+</html>

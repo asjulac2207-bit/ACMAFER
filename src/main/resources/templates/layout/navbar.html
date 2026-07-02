@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+  <nav th:fragment="navbar" class="acm-navbar" id="mainNav">
+    <meta name="_csrf" th:content="${_csrf?.token}" />
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}" />
+    <meta name="_csrf_param" th:content="${_csrf?.parameterName}" />
+
+    <!-- datos del usuario para el avatar JS -->
+    <meta name="acm-avatar-url"   th:content="${#authentication != null and #authentication.principal != null
+                                               ? (T(com.acmafer.comun.seguridad.CustomOAuth2User).isAssignableFrom(#authentication.principal.getClass())
+                                                  ? #authentication.principal.usuario?.fotoUrl
+                                                  : #authentication.principal.fotoUrl) : ''}" />
+    <meta name="acm-user-genero"  th:content="${#authentication != null and #authentication.principal != null
+                                               ? (T(com.acmafer.comun.seguridad.CustomOAuth2User).isAssignableFrom(#authentication.principal.getClass())
+                                                  ? #authentication.principal.usuario?.genero
+                                                  : #authentication.principal.genero) : ''}" />
+    <meta name="acm-usar-google"  th:content="${#authentication != null and #authentication.principal != null
+                                               ? (T(com.acmafer.comun.seguridad.CustomOAuth2User).isAssignableFrom(#authentication.principal.getClass())
+                                                  ? #authentication.principal.usuario?.usarFotoGoogle
+                                                  : #authentication.principal.usarFotoGoogle) : 'false'}" />
+
+    <div class="navbar-inner">
+
+      <!-- ── Brand ── -->
+      <a class="acm-brand" th:href="@{/}">
+        <img th:src="@{/img/logo.png}" alt="ACMAFER" class="brand-fire"
+          style="height:48px;width:auto;object-fit:contain;" />
+        <span class="brand-acm">ACM</span><span class="brand-afer">AFER</span>
+        <span class="brand-sub">INDUSTRIAL</span>
+      </a>
+
+      <!-- ── Desktop nav ── -->
+      <nav class="navbar-nav d-flex flex-row align-items-center" sec:authorize="isAuthenticated()">
+        <div class="nav-item">
+          <a class="acm-nav-link" th:href="@{/dashboard}" data-i18n="nav_dashboard">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="acm-nav-link" th:href="@{/productos/catalogo}" data-i18n="nav_catalogo">
+            <i class="bi bi-grid-3x3-gap"></i> Catálogo
+          </a>
+        </div>
+        <div class="nav-item dropdown">
+          <a class="acm-nav-link dropdown-toggle" href="#" data-i18n="nav_pedidos">
+            <i class="bi bi-cart3"></i> Pedidos
+          </a>
+          <ul class="dropdown-menu acm-dropdown">
+            <li sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR','VENDEDOR')">
+              <a class="dropdown-item" th:href="@{/pedidos/todos}" data-i18n="nav_todos_pedidos">
+                <i class="bi bi-list-ul"></i> Todos los pedidos
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" th:href="@{/pedidos/mis-pedidos}" data-i18n="nav_mis_pedidos">
+                <i class="bi bi-bag-check"></i> Mis pedidos
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="javascript:void(0)" onclick="abrirDrawerPedido()" data-i18n="nav_nuevo_pedido">
+                <i class="bi bi-plus-lg"></i> Nuevo pedido
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="nav-item dropdown" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR','TRABAJADOR')">
+          <a class="acm-nav-link dropdown-toggle" href="#" data-i18n="nav_tareas">
+            <i class="bi bi-kanban"></i> Tareas
+          </a>
+          <ul class="dropdown-menu acm-dropdown">
+            <li>
+              <a class="dropdown-item" th:href="@{/tareas}" data-i18n="nav_ver_tareas">
+                <i class="bi bi-list-check"></i> Ver tareas
+              </a>
+            </li>
+            <li sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+              <a class="dropdown-item" th:href="@{/tareas/nueva}" data-i18n="nav_nueva_tarea">
+                <i class="bi bi-plus-lg"></i> Nueva tarea
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="nav-item" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <a class="acm-nav-link" th:href="@{/reportes}" data-i18n="nav_reportes">
+            <i class="bi bi-bar-chart-line"></i> Reportes
+          </a>
+        </div>
+        <div class="nav-item" sec:authorize="hasRole('VENDEDOR')">
+          <a class="acm-nav-link" th:href="@{/reportes/ventas}">
+            <i class="bi bi-bar-chart-line"></i> Reportes
+          </a>
+        </div>
+        <!-- ✅ FIX: se eliminó el bloque "Usuarios" duplicado que saturaba el navbar -->
+        <div class="nav-item" sec:authorize="hasRole('ADMINISTRADOR')">
+          <a class="acm-nav-link" th:href="@{/usuarios}" data-i18n="nav_usuarios">
+            <i class="bi bi-people"></i> Usuarios
+          </a>
+        </div>
+      </nav>
+
+      <!-- ── Desktop actions ── -->
+      <div class="nav-actions">
+        <button class="theme-btn" id="themeBtn" title="Cambiar tema"><i class="bi bi-sun-fill"></i></button>
+        <div class="lang-switcher" id="langSwitcher" title="Idioma / Language"></div>
+        <a class="notif-btn" th:href="@{/notificaciones}" sec:authorize="isAuthenticated()" title="Notificaciones">
+          <i class="bi bi-bell fs-5"></i>
+          <span class="notif-badge" th:if="${notifCount != null and notifCount > 0}" th:text="${notifCount}">0</span>
+        </a>
+
+        <!-- Avatar con foto o iniciales -->
+        <div class="dropdown" sec:authorize="isAuthenticated()">
+          <button class="avatar-btn dropdown-toggle">
+            <!-- Contenedor del avatar — se llena por JS en acmafer.js -->
+            <div class="navbar-avatar-wrap" id="navbarAvatarWrap">
+              <div class="acm-initials" id="navbarInitials"
+                   th:text="${#authentication.principal.iniciales}">US</div>
+            </div>
+            <span class="acm-username d-none d-md-inline"
+              th:text="${#authentication.principal.nombre}">Usuario</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end acm-dropdown">
+            <li>
+              <h6 class="dropdown-header" th:text="${#authentication.principal.email}">email</h6>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item" th:href="@{/perfil}" data-i18n="nav_mi_perfil">
+                <i class="bi bi-person-circle me-2"></i>Mi perfil
+              </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <form th:action="@{/auth/logout}" method="post" style="margin:0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button class="dropdown-item text-danger" type="submit" data-i18n="nav_cerrar_sesion">
+                  <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
+
+        <a class="btn-login-nav" th:href="@{/auth/login}" sec:authorize="!isAuthenticated()" data-i18n="nav_ingresar">Ingresar</a>
+        <a class="btn-reg-nav" th:href="@{/auth/registro}" sec:authorize="!isAuthenticated()" data-i18n="nav_registrarse">Registrarse</a>
+
+        <!-- Hamburger — solo móvil -->
+        <button class="menu-toggle" id="menuToggle" aria-label="Menú" onclick="toggleMobDrawer()">
+          <i class="bi bi-list"></i>
+        </button>
+      </div>
+    </div><!-- /navbar-inner -->
+
+    <!-- ══ OVERLAY móvil ══ -->
+    <div class="mob-overlay" id="mobOverlay" onclick="closeMobMenu()"></div>
+
+    <!-- ══ DRAWER MÓVIL ══ -->
+    <aside class="mob-drawer" id="mobDrawer" aria-hidden="true">
+
+      <div class="mob-drawer-head">
+        <div class="mob-brand">
+          <span style="color:#fff;font-family:'Orbitron',monospace;font-size:1rem;font-weight:700">ACM</span>
+          <span style="color:#FF6A00;font-family:'Orbitron',monospace;font-size:1rem;font-weight:700">AFER</span>
+        </div>
+        <button class="mob-close" onclick="closeMobMenu()" aria-label="Cerrar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Perfil usuario en drawer -->
+      <div class="mob-user" sec:authorize="isAuthenticated()">
+        <div class="mob-avatar-wrap" id="mobAvatarWrap">
+          <div class="mob-avatar" id="mobAvatarInitials"
+               th:text="${#authentication.principal.iniciales}">US</div>
+        </div>
+        <div>
+          <div class="mob-user-name" th:text="${#authentication.principal.nombre}">Usuario</div>
+          <div class="mob-user-email" th:text="${#authentication.principal.email}">email</div>
+        </div>
+        <a th:href="@{/notificaciones}" class="mob-notif-btn">
+          <i class="bi bi-bell"></i>
+          <span class="mob-notif-badge"
+            th:if="${notifCount != null and notifCount > 0}"
+            th:text="${notifCount}">0</span>
+        </a>
+      </div>
+
+      <!-- Nav principal -->
+      <nav class="mob-nav" sec:authorize="isAuthenticated()">
+        <a class="mob-link" th:href="@{/dashboard}">
+          <i class="bi bi-speedometer2"></i><span data-i18n="nav_dashboard">Dashboard</span>
+        </a>
+        <a class="mob-link" th:href="@{/productos/catalogo}">
+          <i class="bi bi-grid-3x3-gap"></i><span data-i18n="nav_catalogo">Catálogo</span>
+        </a>
+
+        <!-- Pedidos accordion -->
+        <div class="mob-accordion">
+          <button class="mob-acc-toggle" onclick="toggleMobAcc(this)">
+            <span class="mob-acc-left"><i class="bi bi-cart3"></i><span data-i18n="nav_pedidos">Pedidos</span></span>
+            <i class="bi bi-chevron-down mob-chevron"></i>
+          </button>
+          <div class="mob-acc-body">
+            <a class="mob-sub-link" th:href="@{/pedidos/todos}" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+              <i class="bi bi-list-ul"></i> Todos los pedidos
+            </a>
+            <a class="mob-sub-link" th:href="@{/pedidos/mis-pedidos}">
+              <i class="bi bi-bag-check"></i> Mis pedidos
+            </a>
+            <a class="mob-sub-link" href="javascript:void(0)" onclick="closeMobMenu();abrirDrawerPedido()">
+              <i class="bi bi-plus-lg"></i> Nuevo pedido
+            </a>
+          </div>
+        </div>
+
+        <!-- Tareas accordion -->
+        <div class="mob-accordion" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR','TRABAJADOR')">
+          <button class="mob-acc-toggle" onclick="toggleMobAcc(this)">
+            <span class="mob-acc-left"><i class="bi bi-kanban"></i><span data-i18n="nav_tareas">Tareas</span></span>
+            <i class="bi bi-chevron-down mob-chevron"></i>
+          </button>
+          <div class="mob-acc-body">
+            <a class="mob-sub-link" th:href="@{/tareas}"><i class="bi bi-list-check"></i> Ver tareas</a>
+            <a class="mob-sub-link" th:href="@{/tareas/nueva}" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+              <i class="bi bi-plus-lg"></i> Nueva tarea
+            </a>
+          </div>
+        </div>
+
+        <a class="mob-link" th:href="@{/reportes}" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <i class="bi bi-bar-chart-line"></i><span data-i18n="nav_reportes">Reportes</span>
+        </a>
+        <a class="mob-link" th:href="@{/usuarios}" sec:authorize="hasRole('ADMINISTRADOR')">
+          <i class="bi bi-people"></i><span data-i18n="nav_usuarios">Usuarios</span>
+        </a>
+      </nav>
+
+      <div class="mob-divider"></div>
+
+      <!-- Tema + Idioma -->
+      <div class="mob-utils">
+        <div class="mob-util-row">
+          <span class="mob-util-label"><i class="bi bi-palette"></i> Tema</span>
+          <button class="mob-theme-toggle" id="mobThemeBtn">
+            <i class="bi bi-sun-fill"></i><span>Oscuro</span>
+          </button>
+        </div>
+        <div class="mob-util-row">
+          <span class="mob-util-label"><i class="bi bi-translate"></i> Idioma</span>
+          <div class="mob-lang" id="mobLangSwitcher"></div>
+        </div>
+      </div>
+
+      <div class="mob-divider"></div>
+
+      <!-- Cuenta -->
+      <div class="mob-account" sec:authorize="isAuthenticated()">
+        <a class="mob-link" th:href="@{/perfil}">
+          <i class="bi bi-person-circle"></i><span data-i18n="nav_mi_perfil">Mi perfil</span>
+        </a>
+        <form th:action="@{/auth/logout}" method="post" style="margin:0">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <button class="mob-link mob-logout" type="submit">
+            <i class="bi bi-box-arrow-right"></i><span data-i18n="nav_cerrar_sesion">Cerrar sesión</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="mob-auth-btns" sec:authorize="!isAuthenticated()">
+        <a class="mob-btn-login" th:href="@{/auth/login}">Ingresar</a>
+        <a class="mob-btn-reg" th:href="@{/auth/registro}">Registrarse</a>
+      </div>
+
+    </aside>
+  </nav>
+
+  <!-- ── Chatbot ── -->
+  <div th:fragment="chatbot" class="acm-chatbot" sec:authorize="isAuthenticated()">
+    <button class="acm-chat-toggle" id="chatToggle" title="AcmaBot">
+      <i class="bi bi-robot fs-4"></i>
+      <div class="chat-pulse"></div>
+    </button>
+    <div class="acm-chat-window" id="chatWindow">
+      <div class="acm-chat-header">
+        <span><i class="bi bi-robot me-2"></i>AcmaBot</span>
+        <button class="btn-close btn-close-white btn-sm" id="chatClose"></button>
+      </div>
+      <div class="acm-chat-body" id="chatBody">
+       
+      </div>
+      <div class="acm-chat-footer">
+        <input type="text" class="acm-chat-input" id="chatInput"
+          data-i18n-placeholder="chat_placeholder" placeholder="Escribe tu pregunta..." maxlength="200" />
+        <button class="acm-chat-send" id="chatSend"><i class="bi bi-send-fill"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Cart notif ── -->
+  <div th:fragment="cartNotif" class="cart-notif" id="cartNotif">
+    <span class="notif-spin">⚙</span>
+    <span id="cartNotifMsg">Producto agregado</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer th:fragment="footer" class="acm-footer">
+    © 2026 <strong>ACMAFER</strong> — Sistema de Gestión Industrial &nbsp;·&nbsp;
+    <span class="text-muted">SENA CIMM Sogamoso · Grupo 3</span>
+  </footer>
+
+  <!-- ── Scripts ── -->
+  <th:block th:fragment="scripts">
+    <meta name="acm-user-id" th:content="${currentUserId}" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/particles.js}"></script>
+    <script th:src="@{/js/acmafer.js}"></script>
+    <script th:src="@{/js/carrito-pedidos.js}"></script>
+    <script th:src="@{/js/i18n.js}"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+
+        // ── Marcar nav-link activo ──
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.acm-nav-link').forEach(link => {
+          if (link.classList.contains('dropdown-toggle')) return;
+          try {
+            const linkPath = new URL(link.href).pathname;
+            if (linkPath !== '/' && currentPath.startsWith(linkPath)) link.classList.add('active');
+            else link.classList.remove('active');
+          } catch (e) {}
+        });
+
+        // ── Marcar mob-link activo ──
+        document.querySelectorAll('.mob-link, .mob-sub-link').forEach(link => {
+          try {
+            const lp = new URL(link.href).pathname;
+            if (lp !== '/' && currentPath.startsWith(lp)) link.classList.add('mob-active');
+          } catch(e){}
+        });
+
+        // ── Sincronizar tema del drawer ──
+        const mobThemeBtn = document.getElementById('mobThemeBtn');
+        if (mobThemeBtn) {
+          function syncMobTheme() {
+            const isDark = document.documentElement.dataset.theme !== 'light';
+            mobThemeBtn.innerHTML = isDark
+              ? '<i class="bi bi-sun-fill"></i><span>Claro</span>'
+              : '<i class="bi bi-moon-fill"></i><span>Oscuro</span>';
+          }
+          syncMobTheme();
+          mobThemeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.dataset.theme !== 'light';
+            const next = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('acmafer_theme', next);
+            const mainBtn = document.getElementById('themeBtn');
+            if (mainBtn) mainBtn.innerHTML = next === 'dark'
+              ? '<i class="bi bi-sun-fill"></i>'
+              : '<i class="bi bi-moon-fill"></i>';
+            syncMobTheme();
+          });
+        }
+
+        // ── Avatar en navbar: mostrar foto real si existe ──
+        actualizarAvatarNavbar();
+      });
+
+      // ─────────────────────────────────────────────────────────
+      // FIX: Forzar recarga real cuando la página se restaura desde
+      // bfcache (back/forward cache) en vez de quedarse con el HTML
+      // viejo que tiene el avatar desactualizado.
+      // ─────────────────────────────────────────────────────────
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+
+      // ─────────────────────────────────────────────────────────
+      // Actualiza el avatar del navbar con foto o avatar de género
+      // ─────────────────────────────────────────────────────────
+      function actualizarAvatarNavbar() {
+        const fotoUrl    = document.querySelector('meta[name="acm-avatar-url"]')?.content || '';
+        const genero     = document.querySelector('meta[name="acm-user-genero"]')?.content || '';
+        const usarGoogle = document.querySelector('meta[name="acm-usar-google"]')?.content === 'true';
+
+        const avatarM = 'https://tse3.mm.bing.net/th/id/OIP.R4iLiCt_79HCuuJHeUgf_wHaHa?rs=1&pid=ImgDetMain&o=7&rm=3';
+        const avatarF = 'https://img.freepik.com/premium-vector/brown-skin-woman-with-long-hair-dress-portrait-cartoon-illustration_661611-543.jpg';
+
+        // Prioridad: foto Google → avatar género → iniciales
+        let imgSrc = '';
+        if (fotoUrl && usarGoogle) {
+          imgSrc = fotoUrl;
+        } else if (genero === 'M') {
+          imgSrc = avatarM;
+        } else if (genero === 'F') {
+          imgSrc = avatarF;
+        }
+
+        if (imgSrc) {
+          // Navbar desktop
+          const wrap = document.getElementById('navbarAvatarWrap');
+          if (wrap) {
+            wrap.innerHTML = `<img src="${imgSrc}" alt="Avatar"
+              style="width:28px;height:28px;border-radius:7px;object-fit:cover;"
+              referrerpolicy="no-referrer"
+              onerror="this.style.display='none';document.getElementById('navbarInitials').style.display='flex'">`;
+          }
+          // Drawer móvil
+          const mobWrap = document.getElementById('mobAvatarWrap');
+          if (mobWrap) {
+            mobWrap.innerHTML = `<img src="${imgSrc}" alt="Avatar"
+              style="width:40px;height:40px;border-radius:10px;object-fit:cover;border:2px solid #ff6a00;"
+              referrerpolicy="no-referrer"
+              onerror="this.outerHTML='<div class=\\'mob-avatar\\'>${document.getElementById('mobAvatarInitials')?.textContent || 'U'}</div>'">`;
+          }
+        }
+      }
+
+      // ─────────────────────────────────────────────────────────
+      // Drawer móvil
+      // ─────────────────────────────────────────────────────────
+      function toggleMobDrawer() {
+        const drawer  = document.getElementById('mobDrawer');
+        const overlay = document.getElementById('mobOverlay');
+        const toggle  = document.getElementById('menuToggle');
+        if (!drawer) return;
+        const isOpen = drawer.classList.contains('mob-open');
+        if (isOpen) {
+          closeMobMenu();
+        } else {
+          drawer.classList.add('mob-open');
+          overlay.classList.add('mob-open');
+          toggle.innerHTML = '<i class="bi bi-x-lg"></i>';
+          document.body.style.overflow = 'hidden';
+          drawer.setAttribute('aria-hidden', 'false');
+        }
+      }
+
+      function closeMobMenu() {
+        const drawer  = document.getElementById('mobDrawer');
+        const overlay = document.getElementById('mobOverlay');
+        const toggle  = document.getElementById('menuToggle');
+        if (!drawer) return;
+        drawer.classList.remove('mob-open');
+        overlay.classList.remove('mob-open');
+        if (toggle) toggle.innerHTML = '<i class="bi bi-list"></i>';
+        document.body.style.overflow = '';
+        drawer.setAttribute('aria-hidden', 'true');
+      }
+
+      function toggleMobAcc(btn) {
+        const body    = btn.nextElementSibling;
+        const chevron = btn.querySelector('.mob-chevron');
+        const isOpen  = body.classList.contains('mob-acc-open');
+        // Cerrar todos
+        document.querySelectorAll('.mob-acc-body').forEach(b => b.classList.remove('mob-acc-open'));
+        document.querySelectorAll('.mob-chevron').forEach(c => c.style.transform = '');
+        if (!isOpen) {
+          body.classList.add('mob-acc-open');
+          if (chevron) chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    </script>
+  </th:block>
+</body>
+</html>

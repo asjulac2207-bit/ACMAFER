@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Rendimiento del Equipo — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet"/>
+</head>
+<body>
+<canvas id="particlesBg"></canvas>
+<div th:replace="~{layout/navbar :: navbar}"></div>
+<main class="acm-main" style="padding-top:80px">
+<div class="container-fluid px-4">
+    <div class="acm-page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1 class="acm-page-title"><i class="bi bi-graph-up-arrow me-2"></i>Rendimiento del Equipo</h1>
+                <p class="acm-page-sub">Porcentaje de tareas completadas por trabajador.</p>
+            </div>
+            <a th:href="@{/reportes/rendimiento/excel}" class="acm-btn acm-btn-outline">
+                <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+            </a>
+        </div>
+    </div>
+
+    <div class="acm-card">
+        <div class="acm-card-header"><i class="bi bi-people"></i> Trabajadores activos</div>
+        <div class="acm-card-body">
+            <div class="text-center py-4" th:if="${rendimientos.isEmpty()}">
+                <i class="bi bi-people" style="font-size:48px;color:var(--acm-border)"></i>
+                <p style="color:var(--acm-gray);margin-top:12px">No hay trabajadores activos.</p>
+            </div>
+            <div th:each="r : ${rendimientos}" class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="acm-initials" th:text="${r[0].iniciales}">??</span>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:600" th:text="${r[0].nombreCompleto()}">Nombre</div>
+                        <div style="font-size:12px;color:var(--acm-gray)" th:text="${r[0].email}">email</div>
+                    </div>
+                    <div style="font-family:var(--font-display);font-size:24px;font-weight:700;
+                                min-width:60px;text-align:right"
+                         th:text="${r[1] + '%'}"
+                         th:style="${r[1] >= 75} ? 'color:var(--acm-green)' :
+                                   (${r[1] >= 40} ? 'color:var(--acm-orange)' : 'color:var(--acm-red)')">0%</div>
+                </div>
+                <div class="progress" style="height:8px;border-radius:4px">
+                    <div class="progress-bar" role="progressbar"
+                         th:style="'width:' + ${r[1]} + '%;background:' +
+                                   (${r[1] >= 75} ? 'var(--acm-green)' :
+                                   (${r[1] >= 40} ? 'var(--acm-orange)' : 'var(--acm-red)'))"
+                         th:attr="aria-valuenow=${r[1]}"
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/acmafer.js}"></script>
+<div th:replace="~{layout/navbar :: chatbot}"></div>
+<div th:replace="~{layout/navbar :: cartNotif}"></div>
+<footer th:replace="~{layout/navbar :: footer}"></footer>
+<th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+</html>

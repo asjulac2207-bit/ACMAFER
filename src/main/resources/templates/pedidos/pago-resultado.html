@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Resultado de Pago — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet"/>
+</head>
+<body>
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+    <main class="acm-main" style="padding-top:100px">
+        <div class="container" style="max-width:500px">
+            <div class="acm-card text-center" style="padding:2.5rem">
+
+                <!-- Éxito -->
+                <div th:if="${estado == 'Aceptada' or estado == 'aprobado'}">
+                    <div style="font-size:60px;margin-bottom:1rem">✅</div>
+                    <h2 style="color:var(--acm-primary);font-family:var(--font-display)">¡Pago exitoso!</h2>
+                    <p style="color:var(--acm-gray)" th:text="${mensaje}">Mensaje</p>
+                    <div style="background:rgba(22,163,74,.1);border:1px solid #16a34a;border-radius:10px;padding:14px;margin:1rem 0">
+                        <div style="font-size:13px;color:var(--acm-gray)">Número de pedido</div>
+                        <div style="font-size:20px;font-weight:700;color:#16a34a;font-family:var(--font-display)"
+                             th:text="${numeroPedido}">ACM-XXX</div>
+                    </div>
+                    <a th:href="@{/pedidos/mis-pedidos}" class="acm-btn acm-btn-primary w-100"
+                       style="justify-content:center;margin-top:1rem">
+                        <i class="bi bi-bag me-1"></i> Ver mis pedidos
+                    </a>
+                </div>
+
+                <!-- Pendiente -->
+                <div th:if="${estado == 'Pendiente'}">
+                    <div style="font-size:60px;margin-bottom:1rem">⏳</div>
+                    <h2 style="color:#ffa500;font-family:var(--font-display)">Pago en proceso</h2>
+                    <p style="color:var(--acm-gray)" th:text="${mensaje}">Mensaje</p>
+                    <a th:href="@{/pedidos/mis-pedidos}" class="acm-btn acm-btn-outline w-100"
+                       style="justify-content:center;margin-top:1rem">
+                        Ver mis pedidos
+                    </a>
+                </div>
+
+                <!-- Error / Rechazado -->
+                <div th:if="${estado == 'error' or estado == 'Rechazada' or estado == 'fallida'}">
+                    <div style="font-size:60px;margin-bottom:1rem">❌</div>
+                    <h2 style="color:#dc2626;font-family:var(--font-display)">Pago no completado</h2>
+                    <p style="color:var(--acm-gray)" th:text="${mensaje}">Mensaje</p>
+                    <a th:href="@{/pedidos/checkout}" class="acm-btn acm-btn-primary w-100"
+                       style="justify-content:center;margin-top:1rem">
+                        <i class="bi bi-arrow-left me-1"></i> Intentar de nuevo
+                    </a>
+                </div>
+
+                <!-- Badge demo — solo en modo simulado -->
+<!-- Badge demo — solo en modo simulado -->
+<div th:if="${simulado}" 
+     style="background:rgba(255,165,0,.1);border:1px solid #ffa500;border-radius:8px;padding:8px 12px;font-size:12px;color:#ffa500;margin-bottom:1rem;text-align:center">
+    <i class="bi bi-info-circle me-1"></i>
+    Modo demo — En producción se procesará el pago real con ePayco
+</div>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <footer th:replace="~{layout/navbar :: footer}"></footer>
+</body>
+</html>

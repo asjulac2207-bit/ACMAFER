@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalle Pedido — ACMAFER</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+  <style>
+    .badge-estado {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: .05em;
+      font-family: var(--font-display, 'Orbitron', sans-serif);
+    }
+    .badge-estado .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .badge-estado.pendiente   { background: rgba(251,191,36,.15); border: 1px solid rgba(251,191,36,.4); color: #fbbf24; }
+    .badge-estado.pendiente .dot   { background: #fbbf24; }
+    .badge-estado.procesando  { background: rgba(249,115,22,.15); border: 1px solid rgba(249,115,22,.4); color: #f97316; }
+    .badge-estado.procesando .dot  { background: #f97316; }
+    .badge-estado.enviado     { background: rgba(96,165,250,.15);  border: 1px solid rgba(96,165,250,.4);  color: #60a5fa; }
+    .badge-estado.enviado .dot     { background: #60a5fa; }
+    .badge-estado.entregado   { background: rgba(34,197,94,.15);  border: 1px solid rgba(34,197,94,.4);  color: #22c55e; }
+    .badge-estado.entregado .dot   { background: #22c55e; }
+    .badge-estado.cancelado   { background: rgba(239,68,68,.15);  border: 1px solid rgba(239,68,68,.4);  color: #ef4444; }
+    .badge-estado.cancelado .dot   { background: #ef4444; }
+
+    .ped-card { background: var(--acm-card, #151823); border: 1px solid var(--acm-border, #2a2a3a); border-radius: 14px; overflow: hidden; }
+    .ped-card-inner { display: grid; grid-template-columns: 1fr 240px; gap: 0; }
+    @media (max-width: 768px) {
+      .ped-card-inner { grid-template-columns: 1fr; }
+      .ped-admin-panel { border-left: none !important; border-top: 1px solid var(--acm-border, #2a2a3a); }
+    }
+
+    .ped-left { padding: 24px; }
+    .ped-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+    .ped-num-label { font-size: 9px; color: var(--acm-gray, #888); letter-spacing: .07em; font-family: var(--font-display, 'Orbitron', sans-serif); margin-bottom: 3px; }
+    .ped-num { font-size: 17px; font-weight: 700; font-family: 'Share Tech Mono', monospace; color: var(--acm-orange, #ff6a00); line-height: 1.1; }
+    .ped-fecha { font-size: 11px; color: var(--acm-gray, #888); margin-top: 3px; }
+
+    .ped-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+    .ped-metric { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); border-radius: 8px; padding: 10px 12px; }
+    .ped-metric-label { font-size: 8px; color: var(--acm-gray, #888); letter-spacing: .07em; font-family: var(--font-display, 'Orbitron', sans-serif); margin-bottom: 4px; }
+    .ped-metric-val { font-size: 14px; font-weight: 700; color: var(--acm-text, #fff); line-height: 1.1; }
+    .ped-metric-val.naranja { color: var(--acm-orange, #ff6a00); }
+
+    .ped-productos { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+    .ped-productos-title { font-size: 9px; color: var(--acm-gray, #888); letter-spacing: .07em; font-family: var(--font-display, 'Orbitron', sans-serif); margin-bottom: 10px; }
+    .ped-prod-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 12px; }
+    .ped-prod-row:last-of-type { border-bottom: none; }
+    .ped-prod-icon { width: 30px; height: 30px; border-radius: 6px; background: rgba(255,106,0,.1); border: 1px solid rgba(255,106,0,.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ped-prod-nombre { flex: 1; font-weight: 500; color: var(--acm-text, #fff); }
+    .ped-prod-cant   { font-size: 11px; color: var(--acm-gray, #888); white-space: nowrap; }
+    .ped-prod-sub    { font-weight: 700; color: var(--acm-orange, #ff6a00); white-space: nowrap; }
+    .ped-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); margin-top: 4px; }
+    .ped-total-label { font-size: 11px; font-weight: 700; font-family: var(--font-display, 'Orbitron', sans-serif); color: var(--acm-text, #fff); letter-spacing: .05em; }
+    .ped-total-val   { font-size: 16px; font-weight: 900; color: var(--acm-orange, #ff6a00); }
+
+    .ped-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 500px) { .ped-info-grid { grid-template-columns: 1fr; } }
+    .ped-info-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 8px; padding: 10px 12px; }
+    .ped-info-box-label { font-size: 8px; color: var(--acm-gray, #888); letter-spacing: .07em; font-family: var(--font-display, 'Orbitron', sans-serif); margin-bottom: 4px; }
+    .ped-info-box-val  { font-size: 12px; color: var(--acm-text, #fff); line-height: 1.5; }
+    .ped-info-box-sub  { font-size: 11px; color: var(--acm-gray, #888); }
+
+    /* ── Tarjeta de cliente expandida (vendedor) ─────── */
+    .cliente-card {
+      background: linear-gradient(135deg, rgba(255,106,0,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,106,0,.18);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .cliente-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--acm-orange,#ff6a00), #cc5500);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 16px; color: #fff;
+      font-family: var(--font-display, 'Orbitron', sans-serif);
+      flex-shrink: 0;
+    }
+    .cliente-info { flex: 1; min-width: 0; }
+    .cliente-nombre { font-size: 14px; font-weight: 700; color: #fff; }
+    .cliente-meta { font-size: 11px; color: var(--acm-gray,#888); margin-top: 2px; display:flex; gap:12px; flex-wrap:wrap; }
+    .cliente-meta span { display:flex; align-items:center; gap:4px; }
+    .cliente-badge {
+      font-size: 9px; font-weight: 700; letter-spacing:.06em;
+      padding: 2px 8px; border-radius: 12px;
+      background: rgba(255,106,0,.15); color: var(--acm-orange,#ff6a00);
+      text-transform: uppercase;
+    }
+
+    .ped-admin-panel { border-left: 1px solid var(--acm-border, #2a2a3a); padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; }
+    .ped-admin-title { font-size: 9px; color: var(--acm-orange, #ff6a00); letter-spacing: .08em; font-weight: 700; font-family: var(--font-display, 'Orbitron', sans-serif); display: flex; align-items: center; gap: 6px; }
+    .ped-admin-title::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--acm-orange, #ff6a00); display: inline-block; }
+    .ped-admin-field label { display: block; font-size: 9px; color: var(--acm-gray, #888); letter-spacing: .05em; margin-bottom: 5px; font-family: var(--font-display, 'Orbitron', sans-serif); }
+    .ped-admin-field .acm-input, .ped-admin-field .acm-select { width: 100%; font-size: 12px; }
+    .ped-admin-field textarea.acm-input { resize: none; min-height: 60px; font-size: 12px; }
+
+    .btn-actualizar { width: 100%; padding: 10px; background: var(--acm-primary, #ff6a00); border: none; border-radius: 8px; color: #fff; font-family: var(--font-display, 'Orbitron', sans-serif); font-size: 11px; font-weight: 700; letter-spacing: .06em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity .18s, transform .18s; }
+    .btn-actualizar:hover { opacity: .88; transform: translateY(-1px); }
+
+    .btn-confirmar {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none; border-radius: 8px; color: #fff;
+      font-family: var(--font-display, 'Orbitron', sans-serif);
+      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 6px; transition: opacity .18s, transform .18s;
+    }
+    .btn-confirmar:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-confirmar:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+    .ped-admin-divider { border: none; border-top: 1px solid var(--acm-border, #2a2a3a); margin: 0; }
+
+    .btn-volver { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--acm-gray, #888); text-decoration: none; transition: color .15s; }
+    .btn-volver:hover { color: var(--acm-text, #fff); }
+
+    .ped-alert { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; border: 1px solid; }
+    .ped-alert-ok    { background: rgba(34,197,94,.1);  border-color: rgba(34,197,94,.3);  color: #22c55e; }
+    .ped-alert-err   { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.3);  color: #ef4444; }
+
+    .ped-notas { background: rgba(255,165,0,.06); border: 1px solid rgba(255,165,0,.2); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--acm-gray, #aaa); font-style: italic; }
+  </style>
+</head>
+
+<body>
+  <canvas id="particlesBg"></canvas>
+  <div th:replace="~{layout/navbar :: navbar}"></div>
+
+  <main class="acm-main" style="padding-top:88px">
+    <div class="container" style="max-width:1000px">
+
+      <div class="acm-page-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <h1 class="acm-page-title" style="font-size:1.1rem">
+            <i class="bi bi-receipt me-2"></i>Detalle del Pedido
+          </h1>
+          <a th:href="@{/pedidos/mis-pedidos}" class="btn-volver">
+            <i class="bi bi-arrow-left"></i> Volver a mis pedidos
+          </a>
+        </div>
+      </div>
+
+      <div th:if="${exito}" class="ped-alert ped-alert-ok">
+        <i class="bi bi-check-circle-fill"></i><span th:text="${exito}"></span>
+      </div>
+      <div th:if="${error}" class="ped-alert ped-alert-err">
+        <i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span>
+      </div>
+
+      <div class="ped-card">
+        <div class="ped-card-inner">
+
+          <!-- ════ COLUMNA IZQUIERDA ════ -->
+          <div class="ped-left">
+
+            <div class="ped-header">
+              <div>
+                <div class="ped-num-label">N° PEDIDO</div>
+                <div class="ped-num" th:text="${pedido.numeroPedido}">ACM-00000000-0000</div>
+                <div class="ped-fecha">
+                  <i class="bi bi-calendar3 me-1"></i>
+                  <span th:text="${#temporals.format(pedido.fechaPedido,'dd MMM yyyy')}">Fecha</span>
+                  &nbsp;·&nbsp;
+                  <i class="bi bi-clock me-1"></i>
+                  <span th:text="${#temporals.format(pedido.fechaPedido,'HH:mm')}">Hora</span>
+                </div>
+              </div>
+              <div class="badge-estado"
+                   th:classappend="${pedido.estado != null ? pedido.estado.toLowerCase().replace(' ','-') : ''}">
+                <span class="dot"></span>
+                <span th:text="${pedido.estado}">Estado</span>
+              </div>
+            </div>
+
+            <!-- Tarjeta de cliente expandida — visible para VENDEDOR, ADMIN y SUPERVISOR -->
+            <div class="cliente-card" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR','VENDEDOR')"
+                 th:if="${pedido.usuario != null}">
+              <div class="cliente-avatar" th:text="${pedido.usuario.iniciales}">??</div>
+              <div class="cliente-info">
+                <div class="cliente-nombre" th:text="${pedido.usuario.nombreCompleto}">Nombre Cliente</div>
+                <div class="cliente-meta">
+                  <span><i class="bi bi-envelope"></i> <span th:text="${pedido.usuario.email}">email</span></span>
+                  <span th:if="${pedido.usuario.celular}">
+                    <i class="bi bi-telephone"></i> <span th:text="${pedido.usuario.celular}">celular</span>
+                  </span>
+                </div>
+              </div>
+              <div class="cliente-badge" th:text="${pedido.usuario.rol}">ROL</div>
+            </div>
+
+            <div class="ped-metrics">
+              <div class="ped-metric">
+                <div class="ped-metric-label">TOTAL</div>
+                <div class="ped-metric-val naranja"
+                     th:text="${'$' + #numbers.formatDecimal(pedido.total,0,'COMMA',0,'POINT')}">$0</div>
+              </div>
+              <div class="ped-metric">
+                <div class="ped-metric-label">PRODUCTOS</div>
+                <div class="ped-metric-val"
+                     th:text="${pedido.detalles.size()} + (${pedido.detalles.size() == 1} ? ' ítem' : ' ítems')">0 ítems</div>
+              </div>
+              <div class="ped-metric">
+                <div class="ped-metric-label">PAGO</div>
+                <div class="ped-metric-val" style="font-size:12px"
+                     th:text="${pedido.metodoPago ?: 'N/A'}">Efectivo</div>
+              </div>
+            </div>
+
+            <div class="ped-productos">
+              <div class="ped-productos-title">PRODUCTOS DEL PEDIDO</div>
+              <div th:each="d : ${pedido.detalles}" class="ped-prod-row">
+                <div class="ped-prod-icon">
+                  <i class="bi bi-box-seam" style="color:var(--acm-primary,#ff6a00);font-size:13px"></i>
+                </div>
+                <div class="ped-prod-nombre"
+                     th:text="${d.producto != null ? d.producto.nombre : 'Producto eliminado'}">Producto</div>
+                <div class="ped-prod-cant">
+                  <span th:text="${d.cantidad}">1</span> ×
+                  $<span th:text="${#numbers.formatDecimal(d.precioUnitario,0,'COMMA',0,'POINT')}">0</span>
+                </div>
+                <div class="ped-prod-sub">
+                  $<span th:text="${#numbers.formatDecimal(d.subtotal,0,'COMMA',0,'POINT')}">0</span>
+                </div>
+              </div>
+              <div class="ped-total-row">
+                <span class="ped-total-label">TOTAL</span>
+                <span class="ped-total-val"
+                      th:text="${'$' + #numbers.formatDecimal(pedido.total,0,'COMMA',0,'POINT')}">$0</span>
+              </div>
+            </div>
+
+            <div class="ped-info-grid">
+              <div class="ped-info-box">
+                <div class="ped-info-box-label">CLIENTE</div>
+                <div class="ped-info-box-val"
+                     th:text="${pedido.usuario != null ? pedido.usuario.nombreCompleto : 'N/A'}">Nombre</div>
+                <div class="ped-info-box-sub"
+                     th:text="${pedido.usuario != null ? pedido.usuario.email : ''}">email</div>
+              </div>
+
+              <div class="ped-info-box" th:if="${pedido.direccionEntrega != null}">
+                <div class="ped-info-box-label">DIRECCIÓN DE ENTREGA</div>
+                <div class="ped-info-box-val"
+                     th:text="${pedido.direccionEntrega.nombreCompleto}">Nombre</div>
+                <div class="ped-info-box-sub">
+                  <span th:text="${pedido.direccionEntrega.direccion}"></span><br/>
+                  <span th:text="${pedido.direccionEntrega.ciudad + ', ' + pedido.direccionEntrega.estado}"></span>
+                  — CP <span th:text="${pedido.direccionEntrega.codigoPostal}"></span><br/>
+                  <i class="bi bi-telephone" style="font-size:10px"></i>
+                  <span th:text="${pedido.direccionEntrega.telefono}"></span>
+                </div>
+              </div>
+              <div class="ped-info-box" th:unless="${pedido.direccionEntrega != null}">
+                <div class="ped-info-box-label">DIRECCIÓN DE ENTREGA</div>
+                <div class="ped-info-box-sub">No registrada</div>
+              </div>
+            </div>
+
+            <div th:if="${pedido.notas}" class="ped-notas mt-3">
+              <i class="bi bi-chat-left-text me-2" style="color:var(--acm-orange,#ff6a00)"></i>
+              <span th:text="${pedido.notas}"></span>
+            </div>
+
+          </div><!-- /ped-left -->
+
+          <!-- ════ PANEL ADMIN/SUPERVISOR (cambio de estado completo) ════ -->
+          <div class="ped-admin-panel" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+
+            <div class="ped-admin-title">GESTIÓN</div>
+
+            <form th:action="@{/pedidos/cambiar-estado/{id}(id=${pedido.id})}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <div class="ped-admin-field mb-3">
+                <label>NUEVO ESTADO</label>
+                <select name="estado" class="acm-input acm-select" style="font-size:12px">
+                  <option th:each="e : ${estados}" th:value="${e}" th:text="${e}"
+                          th:selected="${e == pedido.estado}"></option>
+                </select>
+              </div>
+              <div class="ped-admin-field mb-3">
+                <label>OBSERVACIÓN</label>
+                <textarea name="observacion" class="acm-input" rows="3" placeholder="Opcional..."></textarea>
+              </div>
+              <button type="submit" class="btn-actualizar">
+                <i class="bi bi-arrow-repeat"></i> Actualizar estado
+              </button>
+            </form>
+
+            <hr class="ped-admin-divider"/>
+
+            <div>
+              <div class="ped-info-box-label" style="font-size:9px;letter-spacing:.07em;color:var(--acm-gray,#888);font-family:var(--font-display,'Orbitron',sans-serif)">ESTADO ACTUAL</div>
+              <div class="badge-estado mt-2"
+                   th:classappend="${pedido.estado != null ? pedido.estado.toLowerCase().replace(' ','-') : ''}">
+                <span class="dot"></span><span th:text="${pedido.estado}">Estado</span>
+              </div>
+            </div>
+
+            <hr class="ped-admin-divider"/>
+            <a th:href="@{/pedidos/mis-pedidos}" class="btn-volver">
+              <i class="bi bi-arrow-left"></i> Volver
+            </a>
+          </div><!-- /ped-admin-panel -->
+
+          <!-- ════ PANEL VENDEDOR (solo confirmar) ════ -->
+          <div class="ped-admin-panel" sec:authorize="hasRole('VENDEDOR')">
+
+            <div class="ped-admin-title">ACCIÓN DE VENTA</div>
+
+            <div th:if="${pedido.estado == 'Pendiente'}">
+              <p style="font-size:11px;color:var(--acm-gray,#888);line-height:1.5;margin-bottom:12px">
+                Este pedido está pendiente de confirmación. Al confirmarlo pasará a estado
+                <strong style="color:#f97316">Procesando</strong>.
+              </p>
+              <form th:action="@{/pedidos/confirmar/{id}(id=${pedido.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn-confirmar">
+                  <i class="bi bi-check-circle-fill"></i> Confirmar pedido
+                </button>
+              </form>
+            </div>
+
+            <div th:unless="${pedido.estado == 'Pendiente'}">
+              <p style="font-size:11px;color:var(--acm-gray,#888);line-height:1.5;margin-bottom:12px">
+                Este pedido ya fue confirmado y está en gestión por el equipo operativo.
+              </p>
+              <button class="btn-confirmar" disabled>
+                <i class="bi bi-check-circle-fill"></i> Ya confirmado
+              </button>
+            </div>
+
+            <hr class="ped-admin-divider"/>
+
+            <div>
+              <div class="ped-info-box-label" style="font-size:9px;letter-spacing:.07em;color:var(--acm-gray,#888);font-family:var(--font-display,'Orbitron',sans-serif)">ESTADO ACTUAL</div>
+              <div class="badge-estado mt-2"
+                   th:classappend="${pedido.estado != null ? pedido.estado.toLowerCase().replace(' ','-') : ''}">
+                <span class="dot"></span><span th:text="${pedido.estado}">Estado</span>
+              </div>
+            </div>
+
+            <hr class="ped-admin-divider"/>
+            <a th:href="@{/pedidos/todos}" class="btn-volver">
+              <i class="bi bi-arrow-left"></i> Volver a pedidos
+            </a>
+          </div><!-- /panel vendedor -->
+
+          <!-- Si NO es admin/supervisor/vendedor: solo volver -->
+          <div sec:authorize="!hasAnyRole('ADMINISTRADOR','SUPERVISOR','VENDEDOR')"
+               style="padding:16px 24px;border-top:1px solid var(--acm-border,#2a2a3a);grid-column:span 2">
+          </div>
+
+        </div><!-- /ped-card-inner -->
+      </div><!-- /ped-card -->
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/acmafer.js}"></script>
+  <div th:replace="~{layout/navbar :: chatbot}"></div>
+  <div th:replace="~{layout/navbar :: cartNotif}"></div>
+  <footer th:replace="~{layout/navbar :: footer}"></footer>
+  <th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+</html>

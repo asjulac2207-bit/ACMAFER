@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cambiar Contraseña — ACMAFER</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<link th:href="@{/css/acmafer.css}" rel="stylesheet"/>
+<style>
+    /* ════════════════════════════════════════════
+       CAMBIAR CONTRASEÑA — Glassmorphism Dark/Light
+       Mismo sistema visual que dashboard / notificaciones
+    ════════════════════════════════════════════ */
+
+    @keyframes pwGlowPulse {
+        0%, 100% { opacity: .55; }
+        50% { opacity: 1; }
+    }
+    @keyframes pwFloatUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pwEmberDrift {
+        0%   { transform: translate(0,0) scale(1); opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: .6; }
+        100% { transform: translate(var(--dx,20px), -140px) scale(.3); opacity: 0; }
+    }
+    @keyframes pwBorderFlow {
+        0%   { background-position: 0% 50%; }
+        100% { background-position: 200% 50%; }
+    }
+    @keyframes pwShake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-6px); }
+        40%, 80% { transform: translateX(6px); }
+    }
+
+    /* ── Theme variables (sincronizado con data-theme del navbar) ── */
+    :root,
+    [data-theme="dark"] {
+        --pw-bg1: #08080f; --pw-bg2: #0b0814; --pw-bg3: #080c14;
+        --pw-surface: rgba(255,255,255,.03);
+        --pw-surface-2: rgba(255,255,255,.045);
+        --pw-border: rgba(255,255,255,.08);
+        --pw-border-2: rgba(255,255,255,.12);
+        --pw-text-1: #f0f0f8;
+        --pw-text-2: #b0b0c8;
+        --pw-text-3: #7a7a95;
+        --pw-text-4: #555555;
+        --pw-shadow: rgba(0,0,0,.4);
+        --pw-input-bg: #0d0d12;
+        --pw-input-border: #252530;
+    }
+    [data-theme="light"] {
+        --pw-bg1: #f4f1ec; --pw-bg2: #efe9e0; --pw-bg3: #f6f2ec;
+        --pw-surface: rgba(255,255,255,.7);
+        --pw-surface-2: rgba(255,255,255,.85);
+        --pw-border: rgba(20,15,10,.08);
+        --pw-border-2: rgba(20,15,10,.13);
+        --pw-text-1: #1f1a15;
+        --pw-text-2: #46403a;
+        --pw-text-3: #66605a;
+        --pw-text-4: #8a8378;
+        --pw-shadow: rgba(30,20,10,.12);
+        --pw-input-bg: #ffffff;
+        --pw-input-border: rgba(20,15,10,.15);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--pw-bg1) 0%, var(--pw-bg2) 50%, var(--pw-bg3) 100%);
+        display: flex; flex-direction: column;
+        position: relative;
+        overflow-x: hidden;
+        transition: background .3s ease;
+    }
+    body::before {
+        content: '';
+        position: fixed; top: -120px; left: -120px;
+        width: 560px; height: 560px;
+        background: radial-gradient(circle, rgba(255,106,0,.09), transparent 65%);
+        pointer-events: none; z-index: 0;
+        animation: pwGlowPulse 6s ease-in-out infinite;
+    }
+    [data-theme="light"] body::before { background: radial-gradient(circle, rgba(255,106,0,.13), transparent 65%); }
+    body::after {
+        content: '';
+        position: fixed; bottom: -100px; right: -100px;
+        width: 420px; height: 420px;
+        background: radial-gradient(circle, rgba(59,130,246,.06), transparent 65%);
+        pointer-events: none; z-index: 0;
+        animation: pwGlowPulse 7s ease-in-out infinite 1.5s;
+    }
+    [data-theme="light"] body::after { background: radial-gradient(circle, rgba(59,130,246,.09), transparent 65%); }
+
+    /* Embers flotantes */
+    .pw-embers { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .pw-ember {
+        position: absolute; bottom: -10px;
+        width: 3px; height: 3px; border-radius: 50%;
+        background: #ff8c3a;
+        box-shadow: 0 0 6px 2px rgba(255,106,0,.7);
+        animation: pwEmberDrift linear infinite;
+    }
+    [data-theme="light"] .pw-ember { opacity: .55; }
+
+    .pw-shell {
+        flex: 1;
+        display: flex; align-items: center; justify-content: center;
+        padding: 40px 24px;
+        position: relative; z-index: 1;
+    }
+
+    .pw-wrap { width: 100%; max-width: 440px; }
+
+    /* ── Brand header ── */
+    .pw-brand-block {
+        text-align: center;
+        margin-bottom: 26px;
+        animation: pwFloatUp .5s ease both;
+    }
+    .pw-brand-link { text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+    .pw-brand-icon {
+        width: 46px; height: 46px; border-radius: 12px;
+        background: rgba(255,106,0,.14);
+        border: 1px solid rgba(255,106,0,.3);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; color: #ff8c3a;
+        box-shadow: 0 0 18px rgba(255,106,0,.18);
+    }
+    .pw-brand-text {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 26px; font-weight: 800; letter-spacing: .02em;
+        color: var(--pw-text-1);
+    }
+    .pw-brand-text .accent { color: #ff6a00; }
+    .pw-eyebrow {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+        color: #ff6a00; margin: 14px 0 4px;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .pw-eyebrow .dot {
+        width: 6px; height: 6px; border-radius: 50%; background: #ff6a00;
+        box-shadow: 0 0 8px #ff6a00;
+        animation: pwGlowPulse 1.6s ease-in-out infinite;
+    }
+    .pw-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 22px; font-weight: 700;
+        margin: 0; letter-spacing: .01em;
+        background: linear-gradient(90deg, var(--pw-text-1), #ffd9b3 60%, #ff8c3a);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .pw-sub {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 13.5px; color: var(--pw-text-4); margin: 6px 0 0;
+    }
+
+    /* ── Glass card ── */
+    .pw-card {
+        background: var(--pw-surface);
+        border: 1px solid var(--pw-border-2);
+        border-radius: 18px;
+        backdrop-filter: blur(12px);
+        position: relative;
+        overflow: hidden;
+        animation: pwFloatUp .55s ease .08s both;
+        transition: background .3s ease, border-color .3s ease, box-shadow .3s ease;
+    }
+    [data-theme="light"] .pw-card { box-shadow: 0 8px 32px var(--pw-shadow); }
+    .pw-card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #ff6a00, #ffb347, #ff6a00, transparent);
+        background-size: 200% 100%;
+        animation: pwBorderFlow 4s linear infinite;
+    }
+    .pw-card-body { padding: 30px 32px; }
+
+    /* ── Alert ── */
+    .pw-alert {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 13.5px; font-weight: 600;
+        background: linear-gradient(90deg, rgba(239,68,68,.14), rgba(239,68,68,.04));
+        border: 1px solid rgba(239,68,68,.35);
+        color: #f87171;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        display: flex; align-items: center; gap: 8px;
+        box-shadow: 0 0 18px rgba(239,68,68,.08);
+    }
+
+    /* ── Form fields ── */
+    .pw-field { margin-bottom: 18px; position: relative; }
+    .pw-label {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 10.5px; font-weight: 700;
+        letter-spacing: .16em; text-transform: uppercase;
+        color: var(--pw-text-3);
+        margin-bottom: 8px; display: block;
+    }
+    .pw-input-wrap { position: relative; }
+    .pw-input {
+        width: 100%;
+        background: var(--pw-input-bg);
+        border: 1px solid var(--pw-input-border);
+        border-radius: 10px;
+        color: var(--pw-text-1);
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 15px; font-weight: 600;
+        padding: 12px 42px 12px 14px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .pw-input:focus {
+        border-color: #ff6a00;
+        box-shadow: 0 0 0 3px rgba(255,106,0,.12);
+    }
+    .pw-input.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,.12);
+    }
+    .pw-input::placeholder { color: var(--pw-text-4); opacity: .6; }
+
+    .pw-toggle-eye {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; cursor: pointer;
+        color: var(--pw-text-4); font-size: 16px;
+        display: flex; align-items: center;
+        transition: color .2s;
+    }
+    .pw-toggle-eye:hover { color: #ff8c3a; }
+
+    .pw-hint {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 11.5px; color: var(--pw-text-4);
+        margin-top: 6px;
+    }
+    .pw-mismatch {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 12px; font-weight: 600; color: #f87171;
+        margin-top: 6px;
+        display: none;
+        align-items: center; gap: 5px;
+    }
+    .pw-mismatch.show { display: flex; animation: pwShake .35s ease; }
+
+    /* ── Strength meter ── */
+    .pw-strength {
+        display: flex; gap: 5px; margin-top: 9px;
+    }
+    .pw-strength-bar {
+        height: 4px; flex: 1; border-radius: 3px;
+        background: var(--pw-border-2);
+        transition: background .25s ease;
+    }
+    .pw-strength-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+        color: var(--pw-text-4); margin-top: 6px;
+    }
+
+    /* ── Buttons ── */
+    .pw-actions { display: flex; gap: 12px; margin-top: 26px; }
+    .pw-btn-primary {
+        flex: 1;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: linear-gradient(135deg, #ff6a00, #e05d00);
+        color: #fff; border: none; border-radius: 10px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px; font-weight: 700;
+        letter-spacing: .06em; text-transform: uppercase;
+        padding: 13px 18px; cursor: pointer;
+        transition: box-shadow .2s, transform .15s, opacity .2s;
+    }
+    .pw-btn-primary:hover:not(:disabled) { box-shadow: 0 6px 22px rgba(255,106,0,.35); transform: translateY(-1px); }
+    .pw-btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+    .pw-btn-outline {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: var(--pw-surface-2);
+        color: var(--pw-text-2);
+        border: 1px solid var(--pw-border-2);
+        border-radius: 10px;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 13px; font-weight: 700;
+        letter-spacing: .04em; text-transform: uppercase;
+        padding: 13px 20px; cursor: pointer;
+        text-decoration: none;
+        transition: border-color .2s, background .2s, color .2s;
+    }
+    .pw-btn-outline:hover { border-color: rgba(255,106,0,.35); color: #ff8c3a; background: rgba(255,106,0,.06); }
+
+    /* ── Security note ── */
+    .pw-note {
+        margin-top: 20px;
+        display: flex; align-items: flex-start; gap: 10px;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 12px; color: var(--pw-text-4);
+        line-height: 1.5;
+    }
+    .pw-note i { color: #ff8c3a; font-size: 13px; margin-top: 1px; }
+</style>
+</head>
+<body>
+<div class="pw-embers" id="pwEmbers"></div>
+
+<div class="pw-shell">
+<div class="pw-wrap">
+
+    <div class="pw-brand-block">
+        <a th:href="@{/perfil}" class="pw-brand-link">
+            <span class="pw-brand-icon"><i class="bi bi-fire"></i></span>
+            <span class="pw-brand-text">ACM<span class="accent">AFER</span></span>
+        </a>
+        <div class="pw-eyebrow"><span class="dot"></span>// SEGURIDAD DE LA CUENTA</div>
+        <h2 class="pw-title">Cambiar contraseña</h2>
+        <p class="pw-sub">Actualiza tus credenciales de acceso</p>
+    </div>
+
+    <div class="pw-card">
+        <div class="pw-card-body">
+            <div class="pw-alert" th:if="${error}">
+                <i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span>
+            </div>
+
+            <form th:action="@{/perfil/cambiar-contrasena}" method="post" id="pwForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="pw-field">
+                    <label class="pw-label">Contraseña actual</label>
+                    <div class="pw-input-wrap">
+                        <input type="password" name="claveActual" id="actualPwd" class="pw-input"
+                               placeholder="••••••••" required autocomplete="current-password"/>
+                        <button type="button" class="pw-toggle-eye" data-target="actualPwd">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pw-field">
+                    <label class="pw-label">Nueva contraseña</label>
+                    <div class="pw-input-wrap">
+                        <input type="password" name="claveNueva" id="nuevaPwd" class="pw-input"
+                               placeholder="••••••••" minlength="8" required autocomplete="new-password"/>
+                        <button type="button" class="pw-toggle-eye" data-target="nuevaPwd">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="pw-strength">
+                        <div class="pw-strength-bar" id="bar1"></div>
+                        <div class="pw-strength-bar" id="bar2"></div>
+                        <div class="pw-strength-bar" id="bar3"></div>
+                        <div class="pw-strength-bar" id="bar4"></div>
+                    </div>
+                    <div class="pw-strength-label" id="strengthLabel">Mínimo 8 caracteres</div>
+                </div>
+
+                <div class="pw-field">
+                    <label class="pw-label">Confirmar nueva contraseña</label>
+                    <div class="pw-input-wrap">
+                        <input type="password" id="confirmPwd" class="pw-input"
+                               placeholder="••••••••" required/>
+                        <button type="button" class="pw-toggle-eye" data-target="confirmPwd">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div id="mismatchMsg" class="pw-mismatch">
+                        <i class="bi bi-x-circle-fill"></i> Las contraseñas no coinciden.
+                    </div>
+                </div>
+
+                <div class="pw-actions">
+                    <button type="submit" id="submitBtn" class="pw-btn-primary">
+                        <i class="bi bi-shield-check"></i> Actualizar
+                    </button>
+                    <a th:href="@{/perfil}" class="pw-btn-outline">Cancelar</a>
+                </div>
+            </form>
+
+            <div class="pw-note">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Usa una contraseña única con letras, números y símbolos para mayor seguridad.</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const n = document.getElementById('nuevaPwd');
+  const c = document.getElementById('confirmPwd');
+  const m = document.getElementById('mismatchMsg');
+  const b = document.getElementById('submitBtn');
+  const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
+  const strengthLabel = document.getElementById('strengthLabel');
+
+  function checkMatch() {
+    const bad = c.value.length > 0 && n.value !== c.value;
+    m.classList.toggle('show', bad);
+    b.disabled = bad;
+  }
+
+  function checkStrength() {
+    const val = n.value;
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+    if (/\d/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
+    const labels = ['Muy débil', 'Débil', 'Aceptable', 'Fuerte'];
+
+    bars.forEach((bar, i) => {
+      bar.style.background = i < score ? colors[Math.max(score - 1, 0)] : 'var(--pw-border-2)';
+    });
+    strengthLabel.textContent = val.length === 0 ? 'Mínimo 8 caracteres' : labels[Math.max(score - 1, 0)];
+  }
+
+  n.addEventListener('input', () => { checkMatch(); checkStrength(); });
+  c.addEventListener('input', checkMatch);
+
+  document.querySelectorAll('.pw-toggle-eye').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      const icon = btn.querySelector('i');
+      const show = target.type === 'password';
+      target.type = show ? 'text' : 'password';
+      icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+  });
+
+  // Brasas flotantes decorativas
+  (function pwEmbersInit() {
+    const container = document.getElementById('pwEmbers');
+    if (!container) return;
+    const count = 14;
+    for (let i = 0; i < count; i++) {
+      const ember = document.createElement('div');
+      ember.className = 'pw-ember';
+      const left = Math.random() * 100;
+      const duration = 6 + Math.random() * 6;
+      const delay = Math.random() * 8;
+      const dx = (Math.random() - 0.5) * 60;
+      ember.style.left = left + 'vw';
+      ember.style.setProperty('--dx', dx + 'px');
+      ember.style.animationDuration = duration + 's';
+      ember.style.animationDelay = delay + 's';
+      container.appendChild(ember);
+    }
+  })();
+</script>
+<div th:replace="~{layout/navbar :: chatbot}"></div>
+<div th:replace="~{layout/navbar :: cartNotif}"></div>
+<footer th:replace="~{layout/navbar :: footer}"></footer>
+<th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+</html>

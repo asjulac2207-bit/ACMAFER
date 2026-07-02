@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Tareas — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+    <style>
+        /* ════════════════════════════════════════════
+           GESTIÓN DE TAREAS — GLASSMORPHISM + PRIORITY BAR
+        ════════════════════════════════════════════ */
+
+        /* ── Theme variables (sincronizado con data-theme del navbar) ── */
+        :root,
+        [data-theme="dark"] {
+            --kt-bg1: #08080f; --kt-bg2: #0b0814; --kt-bg3: #080c14;
+            --kt-surface: rgba(255,255,255,.025);
+            --kt-surface-2: rgba(255,255,255,.04);
+            --kt-surface-3: rgba(255,255,255,.06);
+            --kt-border: rgba(255,255,255,.06);
+            --kt-border-2: rgba(255,255,255,.07);
+            --kt-border-3: rgba(255,255,255,.1);
+            --kt-border-4: rgba(255,255,255,.13);
+            --kt-text-1: #f0f0f0;
+            --kt-text-2: #dde0f0;
+            --kt-text-3: #8899aa;
+            --kt-text-4: #555555;
+            --kt-text-5: #3a3a55;
+            --kt-text-6: #1e1e30;
+            --kt-shadow: rgba(0,0,0,.35);
+        }
+        [data-theme="light"] {
+            --kt-bg1: #f4f1ec; --kt-bg2: #efe9e0; --kt-bg3: #f6f2ec;
+            --kt-surface: rgba(255,255,255,.65);
+            --kt-surface-2: rgba(255,255,255,.85);
+            --kt-surface-3: rgba(255,255,255,.95);
+            --kt-border: rgba(20,15,10,.08);
+            --kt-border-2: rgba(20,15,10,.1);
+            --kt-border-3: rgba(20,15,10,.14);
+            --kt-border-4: rgba(20,15,10,.18);
+            --kt-text-1: #1f1a15;
+            --kt-text-2: #33291f;
+            --kt-text-3: #5c5248;
+            --kt-text-4: #8a8378;
+            --kt-text-5: #a39c8f;
+            --kt-text-6: #c9c2b5;
+            --kt-shadow: rgba(30,20,10,.12);
+        }
+
+        .kt-main {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--kt-bg1) 0%, var(--kt-bg2) 50%, var(--kt-bg3) 100%);
+            padding-top: 90px;
+            padding-bottom: 60px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient glow blobs */
+        .kt-main::before {
+            content: '';
+            position: fixed;
+            top: -120px; left: -120px;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(255,106,0,.05), transparent 65%);
+            pointer-events: none; z-index: 0;
+        }
+        .kt-main::after {
+            content: '';
+            position: fixed;
+            bottom: -100px; right: -100px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(59,130,246,.04), transparent 65%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .kt-shell { position: relative; z-index: 1; padding: 0 28px; }
+
+        /* ── Page header ── */
+        .kt-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kt-page-header-left {}
+        .kt-eyebrow {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: #ff6a00;
+            margin-bottom: 6px;
+        }
+        .kt-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(18px, 3vw, 26px);
+            font-weight: 700;
+            color: var(--kt-text-1);
+            margin: 0 0 4px;
+            letter-spacing: .02em;
+        }
+        .kt-sub {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: var(--kt-text-4);
+            margin: 0;
+        }
+
+        .kt-btn-new {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ff6a00;
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 11px 22px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .2s, box-shadow .2s, transform .1s;
+            white-space: nowrap;
+        }
+        .kt-btn-new:hover {
+            background: #e05d00;
+            box-shadow: 0 4px 24px rgba(255,106,0,.35);
+            color: #fff;
+        }
+        .kt-btn-new:active { transform: scale(.97); }
+
+        /* ── Alerts ── */
+        .kt-alert {
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .kt-alert.success {
+            background: rgba(34,197,94,.1);
+            border: 1px solid rgba(34,197,94,.25);
+            color: #4ade80;
+        }
+        .kt-alert.danger {
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.25);
+            color: #f87171;
+        }
+        .kt-alert .btn-close { filter: invert(.6); margin-left: auto; }
+
+        /* ── Stats strip ── */
+        .kt-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        @media(max-width:768px){ .kt-stats { grid-template-columns: repeat(2,1fr); } }
+
+        .kt-stat {
+            background: var(--kt-surface);
+            border: 1px solid var(--kt-border-2);
+            border-radius: 12px;
+            padding: 18px 20px;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+        .kt-stat::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+        .kt-stat.total::before { background: linear-gradient(90deg,#ff6a00,transparent); }
+        .kt-stat.prog::before  { background: linear-gradient(90deg,#3b82f6,transparent); }
+        .kt-stat.blck::before  { background: linear-gradient(90deg,#ef4444,transparent); }
+        .kt-stat.comp::before  { background: linear-gradient(90deg,#22c55e,transparent); }
+
+        .kt-stat-n {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .kt-stat.total .kt-stat-n { color: var(--kt-text-1); }
+        .kt-stat.prog  .kt-stat-n { color: #60a5fa; }
+        .kt-stat.blck  .kt-stat-n { color: #f87171; }
+        .kt-stat.comp  .kt-stat-n { color: #4ade80; }
+
+        .kt-stat-l {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--kt-text-4);
+            margin-top: 6px;
+        }
+
+        /* ── Kanban Board ── */
+        .kt-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        @media(max-width:1024px){ .kt-board { grid-template-columns: repeat(2,1fr); } }
+        @media(max-width:600px){  .kt-board { grid-template-columns: 1fr; } }
+
+        /* ── Column ── */
+        .kt-col {
+            background: var(--kt-surface);
+            border: 1px solid var(--kt-border);
+            border-radius: 14px;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kt-col-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 16px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--kt-border);
+            flex-shrink: 0;
+        }
+
+        /* glow dot */
+        .kt-glow {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .kt-col-head.gray  { background: rgba(93,109,126,.1);  color: #8899aa; }
+        .kt-col-head.gray  .kt-glow { background:#5d6d7e; box-shadow:0 0 7px #5d6d7e; }
+
+        .kt-col-head.orange { background: rgba(255,106,0,.1);  color: #ff8c3a; }
+        .kt-col-head.orange .kt-glow { background:#ff6a00; box-shadow:0 0 7px #ff6a00; }
+
+        .kt-col-head.red   { background: rgba(239,68,68,.1);   color: #f87171; }
+        .kt-col-head.red   .kt-glow { background:#ef4444; box-shadow:0 0 7px #ef4444; }
+
+        .kt-col-head.green { background: rgba(34,197,94,.1);   color: #4ade80; }
+        .kt-col-head.green .kt-glow { background:#22c55e; box-shadow:0 0 7px #22c55e; }
+
+        .kt-col-badge {
+            margin-left: auto;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            opacity: .7;
+        }
+
+        .kt-col-body {
+            padding: 12px;
+            flex: 1;
+            min-height: 220px;
+        }
+
+        .kt-col-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 160px;
+        }
+        .kt-col-empty span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--kt-text-6);
+            letter-spacing: .1em;
+        }
+
+        /* ── Task Card — Glassmorphism + Priority sidebar ── */
+        .kt-card {
+            background: var(--kt-surface-2);
+            border: 1px solid var(--kt-border-3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color .2s, transform .15s;
+            display: flex;
+        }
+        .kt-card:hover {
+            border-color: var(--kt-border-4);
+            transform: translateY(-1px);
+        }
+
+        /* Priority sidebar bar (like image B) */
+        .kt-card-bar {
+            width: 4px;
+            flex-shrink: 0;
+            border-radius: 10px 0 0 10px;
+        }
+        .kt-card-bar.alta  { background: #ef4444; box-shadow: 2px 0 10px rgba(239,68,68,.35); }
+        .kt-card-bar.media { background: #f59e0b; box-shadow: 2px 0 10px rgba(245,158,11,.35); }
+        .kt-card-bar.baja  { background: #22c55e; box-shadow: 2px 0 10px rgba(34,197,94,.35); }
+        .kt-card-bar.none  { background: #2a2a38; }
+
+        /* shimmer line on top of card */
+        .kt-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 4px; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--kt-border-4), transparent);
+        }
+
+        .kt-card-inner {
+            padding: 14px 14px 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .kt-card-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--kt-text-2);
+            margin-bottom: 5px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Bloqueada title */
+        .kt-card-title.blocked { color: #fca5a5; }
+
+        .kt-card-user {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            color: var(--kt-text-3);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .kt-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Priority pill */
+        .kt-pill {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .kt-pill.alta  { background: rgba(239,68,68,.18);  color: #f87171; border: 1px solid rgba(239,68,68,.3); }
+        .kt-pill.media { background: rgba(245,158,11,.18); color: #fcd34d; border: 1px solid rgba(245,158,11,.3); }
+        .kt-pill.baja  { background: rgba(34,197,94,.18);  color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+
+        /* Eye button */
+        .kt-eye {
+            margin-left: auto;
+            background: var(--kt-surface-3);
+            border: 1px solid var(--kt-border-3);
+            border-radius: 7px;
+            padding: 4px 10px;
+            color: var(--kt-text-4);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            transition: background .2s, color .2s, border-color .2s;
+            white-space: nowrap;
+        }
+        .kt-eye:hover {
+            background: rgba(255,106,0,.15);
+            border-color: rgba(255,106,0,.35);
+            color: #ff8c3a;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particlesBg"></canvas>
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+
+    <main class="kt-main">
+        <div class="kt-shell">
+
+            <!-- Page header -->
+            <div class="kt-page-header">
+                <div class="kt-page-header-left">
+                    <div class="kt-eyebrow">// ACMAFER · MÓDULO DE OPERACIONES</div>
+                    <h1 class="kt-title"><i class="bi bi-kanban me-2"></i><span data-i18n="tar_title">Gestión de Tareas</span></h1>
+                    <p class="kt-sub">Asigna, prioriza y da seguimiento a las tareas del equipo.</p>
+                </div>
+                <a th:href="@{/tareas/nueva}" class="kt-btn-new">
+                    <i class="bi bi-plus-circle-fill"></i> Nueva tarea
+                </a>
+            </div>
+
+            <!-- Alerts -->
+            <div class="kt-alert success alert-dismissible" th:if="${exito}">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${exito}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div class="kt-alert danger alert-dismissible" th:if="${error}">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Stats strip -->
+            <div class="kt-stats">
+                <div class="kt-stat total">
+                    <div class="kt-stat-n" th:text="${asignaciones.size()}">0</div>
+                    <div class="kt-stat-l">Total tareas</div>
+                </div>
+                <div class="kt-stat prog">
+                    <div class="kt-stat-n" th:text="${asignaciones.?[tarea.estado.name()=='EN_PROGRESO'].size()}">0</div>
+                    <div class="kt-stat-l">En progreso</div>
+                </div>
+                <div class="kt-stat blck">
+                    <div class="kt-stat-n" th:text="${asignaciones.?[tarea.estado.name()=='BLOQUEADA'].size()}">0</div>
+                    <div class="kt-stat-l">Bloqueadas</div>
+                </div>
+                <div class="kt-stat comp">
+                    <div class="kt-stat-n" th:text="${asignaciones.?[tarea.estado.name()=='COMPLETADA'].size()}">0</div>
+                    <div class="kt-stat-l">Completadas</div>
+                </div>
+            </div>
+
+            <!-- Kanban board -->
+            <div class="kt-board">
+
+                <!-- Sin iniciar -->
+                <div class="kt-col">
+                    <div class="kt-col-head gray">
+                        <div class="kt-glow"></div>
+                        <i class="bi bi-circle"></i> Sin iniciar
+                        <span class="kt-col-badge" th:text="${asignaciones.?[tarea.estado.name()=='NO_INICIADA'].size()}">0</span>
+                    </div>
+                    <div class="kt-col-body">
+                        <th:block th:each="a : ${asignaciones}" th:if="${a.tarea.estado.name() == 'NO_INICIADA'}">
+                            <div class="kt-card">
+                                <div class="kt-card-bar"
+                                    th:classappend="${a.tarea.prioridad != null ? a.tarea.prioridad.name().toLowerCase() : 'none'}"></div>
+                                <div class="kt-card-inner">
+                                    <div class="kt-card-title" th:text="${a.tarea.titulo}">Tarea</div>
+                                    <div class="kt-card-user">
+                                        <i class="bi bi-person"></i>
+                                        <span th:text="${a.empleado != null ? a.empleado.nombreCompleto : 'Sin asignar'}"></span>
+                                    </div>
+                                    <div class="kt-card-footer">
+                                        <span class="kt-pill"
+                                            th:classappend="${a.tarea.prioridad != null ? a.tarea.prioridad.name().toLowerCase() : ''}"
+                                            th:text="${a.tarea.prioridad}"></span>
+                                        <a th:href="@{/tareas/detalle/{id}(id=${a.tarea.id})}" class="kt-eye">
+                                            <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                        <div class="kt-col-empty" th:if="${asignaciones.?[tarea.estado.name()=='NO_INICIADA'].size() == 0}">
+                            <span>// VACÍO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- En progreso -->
+                <div class="kt-col">
+                    <div class="kt-col-head orange">
+                        <div class="kt-glow"></div>
+                        <i class="bi bi-arrow-repeat"></i> En progreso
+                        <span class="kt-col-badge" th:text="${asignaciones.?[tarea.estado.name()=='EN_PROGRESO'].size()}">0</span>
+                    </div>
+                    <div class="kt-col-body">
+                        <th:block th:each="a : ${asignaciones}" th:if="${a.tarea.estado.name() == 'EN_PROGRESO'}">
+                            <div class="kt-card">
+                                <div class="kt-card-bar"
+                                    th:classappend="${a.tarea.prioridad != null ? a.tarea.prioridad.name().toLowerCase() : 'none'}"></div>
+                                <div class="kt-card-inner">
+                                    <div class="kt-card-title" th:text="${a.tarea.titulo}">Tarea</div>
+                                    <div class="kt-card-user">
+                                        <i class="bi bi-person"></i>
+                                        <span th:text="${a.empleado != null ? a.empleado.nombreCompleto : 'Sin asignar'}"></span>
+                                    </div>
+                                    <div class="kt-card-footer">
+                                        <span class="kt-pill"
+                                            th:classappend="${a.tarea.prioridad != null ? a.tarea.prioridad.name().toLowerCase() : ''}"
+                                            th:text="${a.tarea.prioridad}"></span>
+                                        <a th:href="@{/tareas/detalle/{id}(id=${a.tarea.id})}" class="kt-eye">
+                                            <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                        <div class="kt-col-empty" th:if="${asignaciones.?[tarea.estado.name()=='EN_PROGRESO'].size() == 0}">
+                            <span>// VACÍO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloqueadas -->
+                <div class="kt-col">
+                    <div class="kt-col-head red">
+                        <div class="kt-glow"></div>
+                        <i class="bi bi-ban"></i> Bloqueadas
+                        <span class="kt-col-badge" th:text="${asignaciones.?[tarea.estado.name()=='BLOQUEADA'].size()}">0</span>
+                    </div>
+                    <div class="kt-col-body">
+                        <th:block th:each="a : ${asignaciones}" th:if="${a.tarea.estado.name() == 'BLOQUEADA'}">
+                            <div class="kt-card">
+                                <div class="kt-card-bar alta"></div>
+                                <div class="kt-card-inner">
+                                    <div class="kt-card-title blocked" th:text="${a.tarea.titulo}">Tarea</div>
+                                    <div class="kt-card-user">
+                                        <i class="bi bi-person"></i>
+                                        <span th:text="${a.empleado != null ? a.empleado.nombreCompleto : 'Sin asignar'}"></span>
+                                    </div>
+                                    <div class="kt-card-footer">
+                                        <a th:href="@{/tareas/detalle/{id}(id=${a.tarea.id})}" class="kt-eye">
+                                            <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                        <div class="kt-col-empty" th:if="${asignaciones.?[tarea.estado.name()=='BLOQUEADA'].size() == 0}">
+                            <span>// VACÍO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completadas -->
+                <div class="kt-col">
+                    <div class="kt-col-head green">
+                        <div class="kt-glow"></div>
+                        <i class="bi bi-check-circle"></i> Completadas
+                        <span class="kt-col-badge" th:text="${asignaciones.?[tarea.estado.name()=='COMPLETADA'].size()}">0</span>
+                    </div>
+                    <div class="kt-col-body">
+                        <th:block th:each="a : ${asignaciones}" th:if="${a.tarea.estado.name() == 'COMPLETADA'}">
+                            <div class="kt-card">
+                                <div class="kt-card-bar baja"></div>
+                                <div class="kt-card-inner">
+                                    <div class="kt-card-title" style="color:#86efac" th:text="${a.tarea.titulo}">Tarea</div>
+                                    <div class="kt-card-user">
+                                        <i class="bi bi-person"></i>
+                                        <span th:text="${a.empleado != null ? a.empleado.nombreCompleto : 'Sin asignar'}"></span>
+                                    </div>
+                                    <div class="kt-card-footer">
+                                        <span class="kt-pill baja">Completada</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                        <div class="kt-col-empty" th:if="${asignaciones.?[tarea.estado.name()=='COMPLETADA'].size() == 0}">
+                            <span>// VACÍO</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /kt-board -->
+        </div><!-- /kt-shell -->
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/acmafer.js}"></script>
+    <div th:replace="~{layout/navbar :: chatbot}"></div>
+    <div th:replace="~{layout/navbar :: cartNotif}"></div>
+    <footer th:replace="~{layout/navbar :: footer}"></footer>
+    <th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+</html>

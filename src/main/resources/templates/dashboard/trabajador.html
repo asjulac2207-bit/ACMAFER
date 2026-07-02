@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Trabajador — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+    <style>
+        /* ════════════════════════════════════════════
+           PANEL TRABAJADOR — Glassmorphism Dark/Light
+           Mismo sistema visual que dashboard cliente / notificaciones
+        ════════════════════════════════════════════ */
+
+        @keyframes wkGlowPulse {
+            0%, 100% { opacity: .55; }
+            50% { opacity: 1; }
+        }
+        @keyframes wkFloatUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes wkEmberDrift {
+            0%   { transform: translate(0,0) scale(1); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: .6; }
+            100% { transform: translate(var(--dx,20px), -140px) scale(.3); opacity: 0; }
+        }
+        @keyframes wkBorderFlow {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* ── Theme variables (sincronizado con data-theme del navbar) ── */
+        :root,
+        [data-theme="dark"] {
+            --wk-bg1: #08080f; --wk-bg2: #0b0814; --wk-bg3: #080c14;
+            --wk-surface: rgba(255,255,255,.025);
+            --wk-surface-2: rgba(255,255,255,.04);
+            --wk-border: rgba(255,255,255,.07);
+            --wk-border-2: rgba(255,255,255,.1);
+            --wk-border-3: rgba(255,255,255,.12);
+            --wk-text-1: #f0f0f8;
+            --wk-text-2: #b0b0c8;
+            --wk-text-3: #999999;
+            --wk-text-4: #666666;
+            --wk-text-5: #3a3a55;
+            --wk-shadow: rgba(0,0,0,.35);
+        }
+        [data-theme="light"] {
+            --wk-bg1: #f4f1ec; --wk-bg2: #efe9e0; --wk-bg3: #f6f2ec;
+            --wk-surface: rgba(255,255,255,.65);
+            --wk-surface-2: rgba(255,255,255,.8);
+            --wk-border: rgba(20,15,10,.08);
+            --wk-border-2: rgba(20,15,10,.12);
+            --wk-border-3: rgba(20,15,10,.14);
+            --wk-text-1: #1f1a15;
+            --wk-text-2: #46403a;
+            --wk-text-3: #66605a;
+            --wk-text-4: #8a8378;
+            --wk-text-5: #a39c8f;
+            --wk-shadow: rgba(30,20,10,.1);
+        }
+
+        .wk-main {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--wk-bg1) 0%, var(--wk-bg2) 50%, var(--wk-bg3) 100%);
+            padding-top: 90px;
+            padding-bottom: 60px;
+            position: relative;
+            overflow-x: hidden;
+            transition: background .3s ease;
+        }
+        .wk-main::before {
+            content: '';
+            position: fixed; top: -120px; left: -120px;
+            width: 560px; height: 560px;
+            background: radial-gradient(circle, rgba(255,106,0,.09), transparent 65%);
+            pointer-events: none; z-index: 0;
+            animation: wkGlowPulse 6s ease-in-out infinite;
+        }
+        [data-theme="light"] .wk-main::before { background: radial-gradient(circle, rgba(255,106,0,.13), transparent 65%); }
+        .wk-main::after {
+            content: '';
+            position: fixed; bottom: -100px; right: -100px;
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(59,130,246,.06), transparent 65%);
+            pointer-events: none; z-index: 0;
+            animation: wkGlowPulse 7s ease-in-out infinite 1.5s;
+        }
+        [data-theme="light"] .wk-main::after { background: radial-gradient(circle, rgba(59,130,246,.09), transparent 65%); }
+
+        /* Embers flotantes */
+        .wk-embers { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .wk-ember {
+            position: absolute; bottom: -10px;
+            width: 3px; height: 3px; border-radius: 50%;
+            background: #ff8c3a;
+            box-shadow: 0 0 6px 2px rgba(255,106,0,.7);
+            animation: wkEmberDrift linear infinite;
+        }
+        [data-theme="light"] .wk-ember { opacity: .55; }
+
+        .wk-shell {
+            position: relative; z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Hero header ── */
+        .wk-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 28px;
+            padding: 30px 34px;
+            background: linear-gradient(160deg, rgba(255,106,0,.05), var(--wk-surface));
+            border: 1px solid var(--wk-border-2);
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            animation: wkFloatUp .5s ease both;
+            transition: background .3s ease, border-color .3s ease, box-shadow .3s ease;
+        }
+        [data-theme="light"] .wk-hero { box-shadow: 0 4px 24px var(--wk-shadow); }
+        .wk-hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #ff6a00, #ffb347, #ff6a00, transparent);
+            background-size: 200% 100%;
+            animation: wkBorderFlow 4s linear infinite;
+        }
+        .wk-hero::after {
+            content: '';
+            position: absolute; top: -40%; right: -10%;
+            width: 260px; height: 260px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,106,0,.12), transparent 70%);
+            pointer-events: none;
+        }
+        .wk-hero-eyebrow {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+            color: #ff6a00; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .wk-hero-eyebrow .dot {
+            width: 6px; height: 6px; border-radius: 50%; background: #ff6a00;
+            box-shadow: 0 0 8px #ff6a00;
+            animation: wkGlowPulse 1.6s ease-in-out infinite;
+        }
+        .wk-hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(22px, 3.4vw, 30px); font-weight: 900;
+            margin: 0; letter-spacing: .02em;
+            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(90deg, var(--wk-text-1), #ffd9b3 60%, #ff8c3a);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .wk-hero-title i {
+            color: #ff6a00; -webkit-text-fill-color: #ff6a00;
+            filter: drop-shadow(0 0 8px rgba(255,106,0,.6));
+        }
+        .wk-hero-sub {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px; color: var(--wk-text-4); margin: 8px 0 0;
+        }
+        .wk-hero-sub strong { color: #ff8c3a; font-weight: 700; }
+
+        /* Avatar chip en hero */
+        .wk-hero-avatar {
+            width: 62px; height: 62px; border-radius: 50%;
+            background: rgba(255,106,0,.16);
+            border: 2px solid rgba(255,106,0,.32);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px; font-weight: 700; color: #ff8c3a;
+            box-shadow: 0 0 20px rgba(255,106,0,.18);
+            flex-shrink: 0;
+        }
+
+        /* ── KPI cards ── */
+        .wk-kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .wk-kpi {
+            background: var(--wk-surface);
+            border: 1px solid var(--wk-border);
+            border-radius: 12px;
+            padding: 20px 22px;
+            backdrop-filter: blur(10px);
+            position: relative; overflow: hidden;
+            transition: border-color .2s, transform .15s, box-shadow .2s;
+            animation: wkFloatUp .45s ease both;
+        }
+        [data-theme="light"] .wk-kpi { box-shadow: 0 2px 14px var(--wk-shadow); }
+        .wk-kpi:hover { border-color: rgba(255,106,0,.25); transform: translateY(-2px); }
+        .wk-kpi::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+        .wk-kpi.orange::before { background: linear-gradient(90deg, #ff6a00, transparent); }
+        .wk-kpi.green::before  { background: linear-gradient(90deg, #22c55e, transparent); }
+        .wk-kpi.blue::before   { background: linear-gradient(90deg, #3b82f6, transparent); }
+
+        .wk-kpi-icon { font-size: 22px; margin-bottom: 12px; display: block; }
+        .wk-kpi.orange .wk-kpi-icon { color: #ff6a00; }
+        .wk-kpi.green  .wk-kpi-icon { color: #4ade80; }
+        .wk-kpi.blue   .wk-kpi-icon { color: #60a5fa; }
+
+        .wk-kpi-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 30px; font-weight: 700; color: var(--wk-text-1);
+            line-height: 1; margin-bottom: 6px;
+        }
+        .wk-kpi-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .14em; text-transform: uppercase; color: var(--wk-text-4);
+        }
+
+        /* ── Section title ── */
+        .wk-section-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .18em; text-transform: uppercase;
+            color: #ff6a00; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .wk-section-title::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, #ff6a0030, transparent);
+        }
+
+        /* ── Glass card ── */
+        .wk-card {
+            background: var(--wk-surface);
+            border: 1px solid var(--wk-border);
+            border-radius: 14px; overflow: hidden;
+            backdrop-filter: blur(10px);
+            animation: wkFloatUp .5s ease .05s both;
+        }
+        [data-theme="light"] .wk-card { box-shadow: 0 4px 20px var(--wk-shadow); }
+
+        .wk-card-head {
+            display: flex; align-items: center; gap: 9px;
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--wk-border);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .16em; text-transform: uppercase;
+            background: rgba(255,106,0,.05);
+            color: #ff8c3a;
+        }
+        .wk-glow { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #ff6a00; box-shadow: 0 0 7px #ff6a00; }
+
+        .wk-card-body { padding: 20px; }
+
+        /* ── Quick actions ── */
+        .wk-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .wk-action-btn {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px 18px;
+            background: var(--wk-surface-2);
+            border: 1px solid var(--wk-border-2);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: border-color .2s, background .2s, transform .15s, box-shadow .2s;
+            cursor: pointer;
+        }
+        .wk-action-btn:hover {
+            border-color: rgba(255,106,0,.4);
+            background: rgba(255,106,0,.08);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(255,106,0,.14);
+        }
+        .wk-action-icon {
+            width: 42px; height: 42px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .wk-action-btn.primary .wk-action-icon {
+            background: rgba(255,106,0,.2); color: #ff6a00;
+            border: 1px solid rgba(255,106,0,.3);
+        }
+        .wk-action-btn.outline .wk-action-icon {
+            background: var(--wk-surface-2); color: var(--wk-text-3);
+            border: 1px solid var(--wk-border-3);
+        }
+        .wk-action-btn:hover .wk-action-icon { box-shadow: 0 0 12px rgba(255,106,0,.3); }
+        .wk-action-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14.5px; font-weight: 700; color: var(--wk-text-1);
+            margin-bottom: 2px;
+        }
+        .wk-action-sub {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px; color: var(--wk-text-5);
+        }
+    </style>
+</head>
+
+<body>
+<canvas id="particlesBg"></canvas>
+<div class="wk-embers" id="wkEmbers"></div>
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="wk-main">
+    <div class="wk-shell">
+
+        <!-- ── Hero header ── -->
+        <div class="wk-hero">
+            <div>
+                <div class="wk-hero-eyebrow"><span class="dot"></span>// ACMAFER · PORTAL DE TRABAJADOR</div>
+                <h1 class="wk-hero-title"><i class="bi bi-person-badge"></i> Panel Trabajador</h1>
+                <p class="wk-hero-sub">
+                    Bienvenido, <strong sec:authentication="principal.nombre">Usuario</strong> —
+                    aquí tienes un resumen de tu actividad.
+                </p>
+            </div>
+            <div class="wk-hero-avatar" sec:authentication="principal.iniciales">?</div>
+        </div>
+
+        <!-- ── KPI strip ── -->
+        <div class="wk-kpis">
+            <div class="wk-kpi orange">
+                <i class="bi bi-check2-square wk-kpi-icon"></i>
+                <div class="wk-kpi-val" th:text="${kpis.misTareasActivas}">0</div>
+                <div class="wk-kpi-label">Tareas activas</div>
+            </div>
+            <div class="wk-kpi green">
+                <i class="bi bi-check-circle wk-kpi-icon"></i>
+                <div class="wk-kpi-val" th:text="${kpis.misTareasCompletadas}">0</div>
+                <div class="wk-kpi-label">Tareas completadas</div>
+            </div>
+            <div class="wk-kpi blue">
+                <i class="bi bi-cart3 wk-kpi-icon"></i>
+                <div class="wk-kpi-val" th:text="${kpis.misPedidos}">0</div>
+                <div class="wk-kpi-label">Mis pedidos</div>
+            </div>
+        </div>
+
+        <!-- ── Quick actions ── -->
+        <div class="wk-section-title"><i class="bi bi-lightning-fill"></i> Acciones rápidas</div>
+        <div class="wk-card">
+            <div class="wk-card-head"><div class="wk-glow"></div><i class="bi bi-lightning"></i> ¿Qué quieres hacer?</div>
+            <div class="wk-card-body">
+                <div class="wk-actions">
+                    <a th:href="@{/tareas/mis-tareas}" class="wk-action-btn primary">
+                        <div class="wk-action-icon"><i class="bi bi-check2-square"></i></div>
+                        <div>
+                            <div class="wk-action-title">Ver mis tareas</div>
+                            <div class="wk-action-sub">Consulta y gestiona tus pendientes</div>
+                        </div>
+                    </a>
+                    <a th:href="@{/productos/catalogo}" class="wk-action-btn outline">
+                        <div class="wk-action-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                        <div>
+                            <div class="wk-action-title">Ver catálogo</div>
+                            <div class="wk-action-sub">Explora productos disponibles</div>
+                        </div>
+                    </a>
+                    <a th:href="@{/rendimiento/mi-rendimiento}" class="wk-action-btn outline">
+                        <div class="wk-action-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                        <div>
+                            <div class="wk-action-title">Mi rendimiento</div>
+                            <div class="wk-action-sub">Revisa tus indicadores</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /wk-shell -->
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Brasas flotantes decorativas
+  (function wkEmbers() {
+    const container = document.getElementById('wkEmbers');
+    if (!container) return;
+    const count = 14;
+    for (let i = 0; i < count; i++) {
+      const ember = document.createElement('div');
+      ember.className = 'wk-ember';
+      const left = Math.random() * 100;
+      const duration = 6 + Math.random() * 6;
+      const delay = Math.random() * 8;
+      const dx = (Math.random() - 0.5) * 60;
+      ember.style.left = left + 'vw';
+      ember.style.setProperty('--dx', dx + 'px');
+      ember.style.animationDuration = duration + 's';
+      ember.style.animationDelay = delay + 's';
+      container.appendChild(ember);
+    }
+  })();
+</script>
+<div th:replace="~{layout/navbar :: chatbot}"></div>
+<div th:replace="~{layout/navbar :: cartNotif}"></div>
+<footer th:replace="~{layout/navbar :: footer}"></footer>
+<th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+</html>

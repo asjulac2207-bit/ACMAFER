@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout/main :: head(title='Dashboard')}"></head>
+
+<body th:replace="~{layout/main :: body(contenido=~{::main-frag})}">
+
+  <main th:fragment="main-frag">
+    <div class="container-fluid px-4 py-3">
+
+      <!-- Hero greeting -->
+      <div class="hero-dash mb-3">
+        <div class="hero-dash-title">
+          <span data-i18n="dash_welcome">Hola</span>, <span sec:authentication="principal.nombre">Usuario</span>
+        </div>
+        <p style="color:var(--text-m);font-size:.9rem;margin:.3rem 0 0">
+          <span data-i18n="dash_subtitle">Bienvenido al sistema de gestión <strong>ACMAFER</strong>. Aquí está el resumen de hoy.</span>
+        </p>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card reveal">
+            <div class="kpi-icon" style="background:rgba(255,106,0,.1)">
+              <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="kpi-val" th:data-count="${totalProductos}">0</div>
+            <div class="kpi-label" data-i18n="kpi_products">Productos</div>
+            <div class="kpi-delta up">
+              <span th:text="${productosDisponibles}">0</span> <span data-i18n="kpi_available">disponibles</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card reveal">
+            <div class="kpi-icon" style="background:rgba(37,99,235,.1)">
+              <i class="bi bi-cart3"></i>
+            </div>
+            <div class="kpi-val" th:data-count="${totalPedidos}">0</div>
+            <div class="kpi-label" data-i18n="kpi_orders">Pedidos</div>
+            <div class="kpi-delta" th:classappend="${pedidosPendientes > 0} ? 'down' : 'up'">
+              <span th:text="${pedidosPendientes}">0</span> <span data-i18n="kpi_pending">pendientes</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <div class="kpi-card reveal">
+            <div class="kpi-icon" style="background:rgba(22,163,74,.1)">
+              <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="kpi-val" style="font-size:1.3rem">
+              $<span th:text="${#numbers.formatDecimal(totalVentas,0,'COMMA',0,'POINT')}">0</span>
+            </div>
+            <div class="kpi-label" data-i18n="kpi_revenue">Total Ventas</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <div class="kpi-card reveal">
+            <div class="kpi-icon" style="background:rgba(9,138,189,.1)">
+              <i class="bi bi-people"></i>
+            </div>
+            <div class="kpi-val" th:data-count="${totalUsuarios}">0</div>
+            <div class="kpi-label" data-i18n="kpi_users">Usuarios</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <div class="kpi-card reveal" style="--accent:var(--fire-1)">
+            <div class="kpi-icon" style="background:rgba(239,68,68,.1)">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="kpi-val" th:data-count="${stockBajo != null ? stockBajo.size() : 0}" style="color:#ef4444">0
+            </div>
+            <div class="kpi-label" data-i18n="kpi_low_stock">Stock Bajo</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <div class="kpi-card reveal">
+            <div class="kpi-icon" style="background:rgba(204,112,50,.1)">
+              <i class="bi bi-graph-up"></i>
+            </div>
+            <div class="kpi-val" th:data-count="${pedidosPendientes}">0</div>
+            <div class="kpi-label" data-i18n="kpi_to_attend">Por Atender</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Vendidos Carousel -->
+      <div class="carousel-section rounded-3 mb-3" th:if="${topVendidos != null and !topVendidos.empty}">
+        <div class="px-4 mb-2">
+          <h5 style="font-family:var(--fd);color:var(--fire-1);font-size:.9rem;letter-spacing:.06em">
+            <span data-i18n="dash_top_products">PRODUCTOS MÁS VENDIDOS</span>
+          </h5>
+        </div>
+        <div class="carousel-track-wrap" style="position:relative">
+          <button class="carousel-nav prev" id="carouselPrev">&lt;</button>
+          <div class="carousel-track" id="carouselTrack">
+            <div class="carousel-item-card" th:each="p, iter : ${topVendidos}" th:data-id="${p.id}"
+              th:data-nombre="${p.nombre}"
+              th:data-categoria="${p.categoria != null ? p.categoria.nombre : ''}" th:data-codigo="${p.codigo}"
+              th:data-descripcion="${p.descripcion}"
+              th:data-precio="${p.precioUnitario != null ? p.precioUnitario.toPlainString() : ''}"
+              th:data-stock="${p.stockActual}" th:data-estado="${p.estado}" th:data-url="@{/productos/{id}(id=${p.id})}"
+              th:data-imagen="${p.rutaImagen}" onclick="openProductModal(this)" style="flex-shrink:0;width:240px;">
+              <div class="card-img" style="position:relative;width:100%;height:140px;overflow:hidden;">
+                <img th:if="${p.rutaImagen != null and !#strings.isEmpty(p.rutaImagen)}" th:src="${p.rutaImagen}"
+                  th:alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover;display:block;">
+                <div class="no-img" th:unless="${p.rutaImagen != null and !#strings.isEmpty(p.rutaImagen)}"
+                  style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                  <th:block th:if="${iter.index == 0}"><span>1</span></th:block>
+                  <th:block th:if="${iter.index == 1}"><span>2</span></th:block>
+                  <th:block th:if="${iter.index == 2}"><span>3</span></th:block>
+                  <th:block th:if="${iter.index > 2}"><span>-</span></th:block>
+                </div>
+              </div>
+              <div class="card-body-inner">
+                <div class="card-title" th:text="${p.nombre}">Producto</div>
+                <div class="card-code" th:text="${p.codigo}">COD</div>
+                <div class="card-price">
+                  $<span th:text="${#numbers.formatDecimal(p.precioUnitario,0,'COMMA',0,'POINT')}">0</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span th:class="|acm-status ${p.estado.toLowerCase()}|" th:text="${p.estado}"></span>
+                  <small style="font-family:var(--fm);color:var(--fire-1);font-size:.72rem">
+                    <span th:text="${p.ventasTotales}">0</span> <span data-i18n="dash_sold">vendidos</span>
+                  </small>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <button class="carousel-nav next" id="carouselNext">&gt;</button>
+        </div>
+      </div>
+
+      <!-- Charts + Stock Bajo -->
+      <div class="row g-3 mb-3" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+        <!-- Chart Pedidos por Estado -->
+        <div class="col-md-4">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-pie-chart me-2" style="color:var(--fire-1)"></i><span data-i18n="dash_orders_by_state">Pedidos por Estado</span>
+            </div>
+            <div style="height:200px"><canvas id="chartEstadosPedidos"></canvas></div>
+          </div>
+        </div>
+        <!-- Chart Productos por Categoría -->
+        <div class="col-md-4">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-bar-chart me-2" style="color:var(--blue)"></i><span data-i18n="dash_products_by_cat">Productos por Categoría</span></div>
+            <div style="height:200px"><canvas id="chartCategoriasProductos"></canvas></div>
+          </div>
+        </div>
+        <!-- Stock Bajo -->
+        <div class="col-md-4" th:if="${stockBajo != null and !stockBajo.empty}">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-exclamation-triangle me-2" style="color:#ef4444"></i><span data-i18n="dash_critical_stock">Stock Crítico</span>
+            </div>
+            <div th:each="p : ${stockBajo}" class="stock-row">
+              <span class="stock-name" th:text="${p.nombre}">Producto</span>
+              <span class="stock-badge" th:text="${p.stockActual} + ' uds.'">0</span>
+            </div>
+            <div class="mt-2">
+              <a th:href="@{/productos/catalogo}" class="acm-btn acm-btn-outline acm-btn-sm w-100">
+                <span data-i18n="dash_full_inventory">Ver inventario completo</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="row g-2">
+        <div class="col-auto">
+          <a th:href="@{/productos/catalogo}" class="acm-btn acm-btn-outline acm-btn-sm">
+            <i class="bi bi-grid-3x3-gap"></i> <span data-i18n="dash_btn_catalog">Ver Catálogo</span>
+          </a>
+        </div>
+        <div class="col-auto">
+          <a th:href="@{/pedidos/crear}" class="acm-btn acm-btn-primary acm-btn-sm">
+            <i class="bi bi-plus-lg"></i> <span data-i18n="nav_nuevo_pedido">Nuevo Pedido</span>
+          </a>
+        </div>
+        <div class="col-auto" sec:authorize="hasAnyRole('ADMINISTRADOR','SUPERVISOR')">
+          <a th:href="@{/reportes/pdf/dashboard}" class="acm-btn acm-btn-outline acm-btn-sm">
+            <i class="bi bi-download"></i> <span data-i18n="dash_export_pdf">Exportar PDF</span>
+          </a>
+        </div>
+        <div class="col-auto" sec:authorize="hasRole('ADMINISTRADOR')">
+          <a th:href="@{/productos/nuevo}" class="acm-btn acm-btn-outline acm-btn-sm">
+            <i class="bi bi-plus-circle"></i> <span data-i18n="dash_new_product">Nuevo Producto</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="product-modal-overlay" id="productModal" onclick="if(event.target===this)closeProductModal()">
+      <div class="product-modal">
+        <button class="modal-close" onclick="closeProductModal()">X</button>
+        <div class="modal-viewer">
+          <img id="modalProductImg" src="" alt=""
+            style="display:none;width:100%;height:100%;object-fit:cover;border-radius:inherit;">
+          <div class="modal-3d-icon" id="modal3dIcon">⚙</div>
+          <div class="modal-glow"></div>
+        </div>
+        <div class="modal-info">
+          <div class="modal-cat" id="modalCat"></div>
+          <div class="modal-title" id="modalTitle"></div>
+          <div class="modal-desc" id="modalDesc"></div>
+          <div class="modal-specs">
+            <div class="spec-item">
+              <div class="spec-label">Código</div>
+              <div class="spec-val" id="modalCode"></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Stock</div>
+              <div class="spec-val" id="modalStock"></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Estado</div>
+              <div class="spec-val" id="modalEstado"></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Precio</div>
+              <div class="spec-val" id="modalPrice"></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-primary" id="modalCartBtn">
+              <i class="bi bi-cart"></i> Agregar al pedido
+            </button>
+            <button class="btn-modal-sec" id="modalDetailBtn" onclick="closeProductModal()">Ver detalle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .hero-dash {
+        background: linear-gradient(135deg, var(--dark-1), var(--dark-2));
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden
+      }
+
+      .hero-dash::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(ellipse at 80% 50%, rgba(255, 106, 0, .07), transparent 60%)
+      }
+
+      .hero-dash-title {
+        font-family: var(--fd);
+        font-size: 1.7rem;
+        font-weight: 900;
+        color: var(--text)
+      }
+
+      .hero-dash-title span {
+        color: var(--fire-1)
+      }
+
+      .stock-row {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .45rem 0;
+        border-bottom: 1px solid var(--border)
+      }
+
+      .stock-row:last-child {
+        border-bottom: none
+      }
+
+      .stock-name {
+        font-size: .86rem;
+        color: var(--text);
+        flex: 1
+      }
+
+      .stock-badge {
+        font-family: var(--fm);
+        font-size: .78rem;
+        font-weight: 700;
+        padding: .15rem .5rem;
+        border-radius: 4px;
+        background: rgba(239, 68, 68, .12);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, .25)
+      }
+    </style>
+
+    <script th:inline="javascript">
+      const _pedidos = {
+        pendiente: 0,
+        procesando: 0,
+        entregado: 0
+      };
+
+      const _categoriasData = {};
+
+      document.addEventListener('DOMContentLoaded', () => {
+        acmChart('chartEstadosPedidos', 'doughnut',
+          ['Pendiente', 'Procesando', 'Entregado', 'Cancelado'],
+          [{ data: [_pedidos.pendiente, _pedidos.procesando, _pedidos.entregado, 0] }]
+        );
+
+        acmChart('chartCategoriasProductos', 'bar',
+          Object.keys(_categoriasData),
+          [{ label: 'Productos', data: Object.values(_categoriasData) }]
+        );
+      });
+    </script>
+  </main>
+
+</body>
+
+</html>

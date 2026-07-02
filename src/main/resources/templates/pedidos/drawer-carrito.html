@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <!--
+        Fragmento del carrito lateral (drawer) + botón flotante (FAB).
+        USO en cualquier template:
+            <div th:replace="~{pedidos/drawer-carrito :: drawer}"></div>
+
+        El layout base (layout.html) ya incluye este fragmento automáticamente
+        mediante:
+            <th:block sec:authorize="isAuthenticated()"
+                      th:replace="~{pedidos/drawer-carrito :: drawer}">
+            </th:block>
+
+        La meta "acm-user-id" vive en el <head> del layout base, NO aquí.
+    -->
+
+    <th:block th:fragment="drawer">
+
+        <!-- ═══════════════════════════════════════════════
+             OVERLAY + PANEL LATERAL DEL CARRITO
+             ═══════════════════════════════════════════════ -->
+        <div class="acm-drawer-overlay" id="drawerOverlay">
+            <div class="acm-drawer" id="carritoDrawer">
+
+                <!-- Cabecera -->
+                <div class="acm-drawer-header">
+                    <h3><i class="bi bi-cart3 me-2"></i>Tu Pedido</h3>
+                    <button class="acm-drawer-close" id="drawerClose">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Cuerpo -->
+                <div class="acm-drawer-body">
+
+                    <!-- Estado vacío -->
+                    <div id="carritoVacio" class="text-center py-5">
+                        <i class="bi bi-cart" style="font-size:48px;color:var(--text-m);opacity:.3"></i>
+                        <p style="color:var(--text-m);margin-top:12px;font-size:13px">
+                            Tu carrito está vacío
+                        </p>
+                        <p style="color:var(--text-m);font-size:12px">
+                            Agrega productos desde el catálogo
+                        </p>
+                    </div>
+
+                    <!-- Lista de items (renderizada por JS) -->
+                    <div id="carritoItems" style="display:none"></div>
+
+                    <!-- Totales -->
+                    <div id="carritoTotal"
+                         style="display:none;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span style="font-size:13px;color:var(--text-m)">Subtotal:</span>
+                            <span id="subtotalCarrito" style="font-weight:600">$0</span>
+                        </div>
+                        <div class="d-flex justify-content-between" style="font-size:15px">
+                            <span style="font-weight:700">Total:</span>
+                            <span id="totalCarrito" style="font-weight:900;color:var(--fire-1)">$0</span>
+                        </div>
+                    </div>
+
+                </div><!-- /acm-drawer-body -->
+
+                <!-- Footer: observaciones + botón confirmar -->
+                <div class="acm-drawer-footer" id="drawerFooter" style="display:none">
+                    <div class="mb-3">
+                        <label class="acm-label">Observaciones</label>
+                        <textarea id="observaciones"
+                                  class="acm-input"
+                                  rows="2"
+                                  placeholder="Instrucciones especiales..."></textarea>
+                    </div>
+                    <button id="btnConfirmarPedido" class="acm-btn acm-btn-primary w-100">
+                        <i class="bi bi-geo-alt-fill me-1"></i> Continuar a la entrega
+                    </button>
+                    <p style="font-size:11px;color:var(--text-m);text-align:center;margin:8px 0 0">
+                        Elegirás tu dirección de entrega y método de pago en el siguiente paso.
+                    </p>
+                </div>
+
+            </div><!-- /acm-drawer -->
+        </div><!-- /acm-drawer-overlay -->
+
+        <!-- ═══════════════════════════════════════════════
+             BOTÓN FLOTANTE (FAB)
+             ═══════════════════════════════════════════════ -->
+        <button class="acm-cart-fab" id="cartFab" style="display:none">
+            <i class="bi bi-cart3"></i>
+            <span class="acm-cart-badge" id="cartBadge">0</span>
+        </button>
+
+    </th:block>
+</body>
+
+</html>

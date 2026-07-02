@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todos los Pedidos — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+
+    <style>
+        /* ══════════════════════════════════════════
+           ACMAFER GLASS INDUSTRIAL — design tokens
+           ══════════════════════════════════════════ */
+        :root,
+        [data-theme="dark"] {
+            --wk-bg1: #0a0e1a;
+            --wk-bg2: #0f172a;
+            --wk-bg3: #1a1f35;
+            --wk-surface: rgba(30, 41, 59, .55);
+            --wk-surface-2: rgba(30, 41, 59, .75);
+            --wk-border: rgba(255, 255, 255, .08);
+            --wk-border-2: rgba(255, 255, 255, .14);
+            --wk-border-3: rgba(255, 106, 0, .35);
+            --wk-text-1: #f8fafc;
+            --wk-text-2: #e2e8f0;
+            --wk-text-3: #cbd5e1;
+            --wk-text-4: #94a3b8;
+            --wk-text-5: #64748b;
+            --wk-shadow: 0 20px 60px rgba(0, 0, 0, .4);
+            --wk-accent: #ff6a00;
+            --wk-accent-2: #ff8533;
+            --wk-accent-glow: rgba(255, 106, 0, .35);
+            --wk-green: #16a34a;
+            --wk-blue: #2563eb;
+            --wk-red: #ef4444;
+            --wk-amber: #f59e0b;
+            --wk-purple: #9333ea;
+            --wk-radius: 14px;
+            --wk-ff-title: 'Orbitron', sans-serif;
+            --wk-ff-ui: 'Rajdhani', sans-serif;
+            --wk-ff-mono: 'Share Tech Mono', monospace;
+        }
+
+        [data-theme="light"] {
+            --wk-bg1: #eef2f7;
+            --wk-bg2: #e2e8f0;
+            --wk-bg3: #f8fafc;
+            --wk-surface: rgba(255, 255, 255, .72);
+            --wk-surface-2: rgba(255, 255, 255, .92);
+            --wk-border: rgba(15, 23, 42, .08);
+            --wk-border-2: rgba(15, 23, 42, .14);
+            --wk-border-3: rgba(255, 106, 0, .35);
+            --wk-text-1: #0f172a;
+            --wk-text-2: #1e293b;
+            --wk-text-3: #334155;
+            --wk-text-4: #64748b;
+            --wk-text-5: #94a3b8;
+            --wk-shadow: 0 20px 60px rgba(15, 23, 42, .1);
+        }
+
+        body {
+            background: var(--wk-bg2);
+            color: var(--wk-text-2);
+            font-family: var(--wk-ff-ui);
+        }
+
+        /* ── Fondo principal con gradiente + glows ── */
+        .wk-main {
+            position: relative;
+            background:
+                radial-gradient(ellipse 900px 500px at 15% 0%, rgba(255, 106, 0, .10), transparent 60%),
+                radial-gradient(ellipse 800px 600px at 100% 30%, rgba(37, 99, 235, .08), transparent 60%),
+                linear-gradient(160deg, var(--wk-bg1) 0%, var(--wk-bg2) 55%, var(--wk-bg3) 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            padding-bottom: 2rem;
+        }
+
+        .wk-main::before,
+        .wk-main::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: wkGlowPulse 8s ease-in-out infinite;
+        }
+
+        .wk-main::before {
+            width: 420px;
+            height: 420px;
+            top: -120px;
+            left: -100px;
+            background: var(--wk-accent-glow);
+        }
+
+        .wk-main::after {
+            width: 380px;
+            height: 380px;
+            bottom: -140px;
+            right: -80px;
+            background: rgba(37, 99, 235, .18);
+            animation-delay: 3s;
+        }
+
+        @keyframes wkGlowPulse {
+            0%, 100% { opacity: .55; transform: scale(1); }
+            50% { opacity: .9; transform: scale(1.12); }
+        }
+
+        /* ── Brasas flotantes ── */
+        .wk-embers {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .wk-ember {
+            position: absolute;
+            bottom: -10px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--wk-accent);
+            box-shadow: 0 0 6px 2px var(--wk-accent-glow);
+            opacity: 0;
+            animation: wkEmberDrift linear infinite;
+        }
+
+        @keyframes wkEmberDrift {
+            0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+            10% { opacity: .9; }
+            90% { opacity: .5; }
+            100% { transform: translate(var(--wk-drift, 30px), -110vh) scale(1); opacity: 0; }
+        }
+
+        .wk-main > .container-fluid { position: relative; z-index: 1; }
+
+        /* ── Encabezado de página ── */
+        .wk-page-header {
+            position: relative;
+            padding: 2rem 0 1.5rem;
+        }
+
+        .wk-page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 140px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--wk-accent), transparent);
+            background-size: 200% 100%;
+            animation: wkBorderFlow 3.5s linear infinite;
+        }
+
+        @keyframes wkBorderFlow {
+            0% { background-position: 0% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .wk-page-title {
+            font-family: var(--wk-ff-title);
+            font-weight: 900;
+            font-size: 1.7rem;
+            letter-spacing: .01em;
+            margin: 0;
+            background: linear-gradient(90deg, var(--wk-text-1) 30%, var(--wk-accent-2) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .wk-page-title i { -webkit-text-fill-color: var(--wk-accent); color: var(--wk-accent); }
+
+        .wk-page-sub {
+            font-family: var(--wk-ff-mono);
+            font-size: .82rem;
+            color: var(--wk-text-4);
+            margin: .4rem 0 0;
+        }
+
+        /* ── Card glass ── */
+        .wk-card {
+            background: var(--wk-surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--wk-border);
+            border-radius: var(--wk-radius);
+            box-shadow: var(--wk-shadow);
+            overflow: hidden;
+        }
+
+        .wk-card-head {
+            padding: 1.1rem 1.35rem;
+            border-bottom: 1px solid var(--wk-border);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-family: var(--wk-ff-title);
+            font-size: .88rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            color: var(--wk-text-1);
+        }
+
+        .wk-card-head i { color: var(--wk-accent); }
+        .wk-card-body { padding: 1.35rem; }
+        .wk-card-body.p-0 { padding: 0; }
+
+        /* ── Formulario de filtros ── */
+        .wk-label {
+            display: block;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--wk-text-4);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: .35rem;
+        }
+
+        .wk-input,
+        select.wk-input {
+            width: 100%;
+            background: var(--wk-surface-2);
+            border: 1px solid var(--wk-border-2);
+            border-radius: 8px;
+            padding: .6rem .85rem;
+            color: var(--wk-text-1);
+            font-family: var(--wk-ff-ui);
+            font-size: .92rem;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .wk-input::placeholder { color: var(--wk-text-5); }
+
+        .wk-input:focus {
+            outline: none;
+            border-color: var(--wk-accent);
+            box-shadow: 0 0 0 3px var(--wk-accent-glow);
+        }
+
+        /* ── Botones ── */
+        .wk-btn-outline,
+        .wk-btn-primary {
+            padding: .65rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: .85rem;
+            font-family: var(--wk-ff-ui);
+            transition: all .3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .wk-btn-sm { padding: .4rem .75rem; font-size: .78rem; }
+
+        .wk-btn-outline {
+            background: transparent;
+            border-color: var(--wk-accent);
+            color: var(--wk-accent);
+        }
+
+        .wk-btn-outline:hover {
+            background: var(--wk-accent);
+            color: #0a0e1a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--wk-accent-glow);
+        }
+
+        .wk-btn-primary {
+            background: linear-gradient(135deg, var(--wk-accent), var(--wk-accent-2));
+            color: #0a0e1a;
+            box-shadow: 0 4px 16px var(--wk-accent-glow);
+        }
+
+        .wk-btn-primary:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+        /* ── Tabla ── */
+        .wk-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .wk-table thead th {
+            background: var(--wk-surface-2);
+            color: var(--wk-text-4);
+            font-family: var(--wk-ff-ui);
+            font-size: .76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: .85rem 1.1rem;
+            border-bottom: 1px solid var(--wk-border-2);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .wk-table tbody td {
+            padding: .85rem 1.1rem;
+            border-bottom: 1px solid var(--wk-border);
+            color: var(--wk-text-2);
+            font-size: .88rem;
+            vertical-align: middle;
+        }
+
+        .wk-table tbody tr:last-child td { border-bottom: none; }
+        .wk-table tbody tr { transition: background .2s; }
+        .wk-table tbody tr:hover { background: rgba(255, 106, 0, .04); }
+
+        .wk-cell-code { font-family: var(--wk-ff-mono); font-weight: 700; color: var(--wk-text-1); font-size: .82rem; }
+        .wk-cell-name { font-weight: 600; color: var(--wk-text-1); }
+        .wk-cell-sub { font-size: .74rem; color: var(--wk-text-4); }
+        .wk-cell-total { font-weight: 700; color: var(--wk-accent-2); font-family: var(--wk-ff-mono); }
+
+        /* ── Badges de rol / estado ── */
+        .wk-badge {
+            display: inline-block;
+            font-family: var(--wk-ff-ui);
+            font-size: .74rem;
+            font-weight: 700;
+            padding: .3rem .65rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            background: var(--wk-surface-2);
+            color: var(--wk-text-3);
+            border: 1px solid var(--wk-border-2);
+        }
+
+        .wk-badge.estado-pendiente   { background: rgba(245, 158, 11, .14); color: var(--wk-amber); border-color: rgba(245, 158, 11, .3); }
+        .wk-badge.estado-procesando  { background: rgba(37, 99, 235, .14); color: var(--wk-blue); border-color: rgba(37, 99, 235, .3); }
+        .wk-badge.estado-aprobado    { background: rgba(147, 51, 234, .14); color: var(--wk-purple); border-color: rgba(147, 51, 234, .3); }
+        .wk-badge.estado-entregado   { background: rgba(22, 163, 74, .14); color: var(--wk-green); border-color: rgba(22, 163, 74, .3); }
+        .wk-badge.estado-completado  { background: rgba(22, 163, 74, .14); color: var(--wk-green); border-color: rgba(22, 163, 74, .3); }
+        .wk-badge.estado-cancelado   { background: rgba(239, 68, 68, .14); color: var(--wk-red); border-color: rgba(239, 68, 68, .3); }
+
+        .wk-empty-state {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--wk-text-4);
+        }
+
+        .wk-empty-state i { font-size: 2.8rem; display: block; margin-bottom: .9rem; color: var(--wk-text-5); }
+
+        /* ── Paginación ── */
+        .wk-pagination {
+            display: flex;
+            justify-content: center;
+            gap: .4rem;
+            list-style: none;
+            padding: 0;
+            margin: 1.25rem 0 0;
+        }
+
+        .wk-pagination .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            height: 38px;
+            padding: 0 .6rem;
+            border-radius: 8px;
+            background: var(--wk-surface);
+            border: 1px solid var(--wk-border-2);
+            color: var(--wk-text-3);
+            font-family: var(--wk-ff-mono);
+            font-size: .85rem;
+            text-decoration: none;
+            transition: all .2s;
+        }
+
+        .wk-pagination .page-link:hover {
+            border-color: var(--wk-accent);
+            color: var(--wk-accent);
+        }
+
+        .wk-pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, var(--wk-accent), var(--wk-accent-2));
+            border-color: transparent;
+            color: #0a0e1a;
+            font-weight: 700;
+        }
+
+        .wk-pagination .page-item.disabled .page-link {
+            opacity: .35;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particlesBg"></canvas>
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+    <main class="wk-main" style="padding-top:80px">
+        <div class="wk-embers" id="wkEmbers"></div>
+        <div class="container-fluid px-4">
+            <div class="wk-page-header">
+                <h1 class="wk-page-title"><i class="bi bi-cart3 me-2"></i><span data-i18n="ped_title">Gestión de Pedidos</span></h1>
+                <p class="wk-page-sub" th:text="'Total: ' + ${pagina.totalElements} + ' pedidos'"></p>
+            </div>
+
+            <!-- Filtros -->
+            <div class="wk-card mb-4">
+                <div class="wk-card-body">
+                    <form th:action="@{/pedidos/todos}" method="get" class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="wk-label" data-i18n="ped_search_label">Buscar</label>
+                            <input type="text" name="q" class="wk-input" th:value="${filtroQ}"
+    data-i18n-placeholder="ped_search_ph" placeholder="N° pedido, nombre de solicitante..." />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="wk-label" data-i18n="ped_status_label">Estado</label>
+                            <select name="estado" class="wk-input">
+                                <option value="" data-i18n="ped_all">Todos</option>
+                                <option th:each="e : ${estados}" th:value="${e}" th:text="${e}"
+                                    th:selected="${filtroEstado == e}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="wk-btn-primary w-100">
+                                <i class="bi bi-search"></i> Filtrar
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <a th:href="@{/pedidos/todos}" class="wk-btn-outline w-100">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="wk-card">
+                <div class="wk-card-head"><i class="bi bi-list-ul"></i> Listado de pedidos</div>
+                <div class="wk-card-body p-0">
+                    <div class="wk-empty-state" th:if="${pagina.isEmpty()}">
+                        <i class="bi bi-cart-x"></i>
+                        <p>No hay pedidos que coincidan.</p>
+                    </div>
+                    <table class="wk-table" th:unless="${pagina.isEmpty()}">
+                        <thead>
+                            <tr>
+                                <th>N° Pedido</th>
+                                <th>Solicitante</th>
+                                <th>Rol</th>
+                                <th>Fecha</th>
+                                <th>Ítems</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${pagina.content}">
+                                <td class="wk-cell-code" th:text="${p.numeroPedido}">PED-001</td>
+                                <td>
+                                    <div class="wk-cell-name"
+                                        th:text="${p.usuario != null ? p.usuario.nombre + ' ' + p.usuario.apellido : 'N/A'}">
+                                    </div>
+                                    <div class="wk-cell-sub"
+                                        th:text="${p.usuario != null ? p.usuario.email : ''}"></div>
+                                </td>
+                                <td>
+                                    <span class="wk-badge" th:text="${p.usuario != null ? p.usuario.rol : ''}"></span>
+                                </td>
+                                <td class="wk-cell-sub"
+                                    th:text="${#temporals.format(p.fechaPedido,'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${p.detalles.size()}">0</td>
+                                <td class="wk-cell-total"
+                                    th:text="${p.total != null ? '$' + #numbers.formatDecimal(p.total,0,'COMMA',0,'POINT') : '$0'}">
+                                    $0</td>
+                                <td>
+                                    <span class="wk-badge"
+                                        th:classappend="' estado-' + ${p.estado != null ? p.estado.toLowerCase().replace(' ','-') : ''}"
+                                        th:text="${p.estado}"></span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <!-- Botón Confirmar — solo VENDEDOR y solo si está Pendiente -->
+                                        <form th:if="${esVendedor and p.estado == 'Pendiente'}"
+                                              th:action="@{/pedidos/confirmar/{id}(id=${p.id})}"
+                                              method="post" class="m-0">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                            <button type="submit" class="wk-btn-primary wk-btn-sm"
+                                                    title="Confirmar y pasar a Procesando">
+                                                <i class="bi bi-check-circle"></i> Confirmar
+                                            </button>
+                                        </form>
+                                        <a th:href="@{/pedidos/{id}(id=${p.id})}"
+                                            class="wk-btn-outline wk-btn-sm">
+                                            <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paginación -->
+            <nav th:if="${pagina.totalPages > 1}" class="mt-3">
+                <ul class="wk-pagination">
+                    <li class="page-item" th:classappend="${pagina.first}?'disabled'">
+                        <a class="page-link"
+                            th:href="@{/pedidos/todos(page=${pagina.number-1},estado=${filtroEstado})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0,pagina.totalPages-1)}"
+                        th:classappend="${i==pagina.number}?'active'">
+                        <a class="page-link" th:href="@{/pedidos/todos(page=${i},estado=${filtroEstado})}"
+                            th:text="${i+1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${pagina.last}?'disabled'">
+                        <a class="page-link"
+                            th:href="@{/pedidos/todos(page=${pagina.number+1},estado=${filtroEstado})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const wrap = document.getElementById('wkEmbers');
+            if (!wrap) return;
+            for (let i = 0; i < 14; i++) {
+                const e = document.createElement('span');
+                e.className = 'wk-ember';
+                e.style.left = Math.random() * 100 + '%';
+                e.style.setProperty('--wk-drift', (Math.random() * 60 - 30) + 'px');
+                e.style.animationDuration = (6 + Math.random() * 6) + 's';
+                e.style.animationDelay = (Math.random() * 8) + 's';
+                wrap.appendChild(e);
+            }
+        })();
+    </script>
+    <div th:replace="~{layout/navbar :: chatbot}"></div>
+    <div th:replace="~{layout/navbar :: cartNotif}"></div>
+    <footer th:replace="~{layout/navbar :: footer}"></footer>
+    <th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+
+</html>

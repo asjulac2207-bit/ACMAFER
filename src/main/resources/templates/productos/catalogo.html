@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="acm-user-id" th:content="${currentUserId}" />
+
+  <title>Catálogo de Productos — ACMAFER</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet" />
+  <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+  <style>
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .7rem;
+      align-items: center;
+      margin-bottom: 1.5rem
+    }
+
+    .filter-btn {
+      padding: .4rem 1.1rem;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-m);
+      font-family: var(--fb);
+      font-size: .84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--t)
+    }
+
+    .filter-btn.active,
+    .filter-btn:hover {
+      background: linear-gradient(135deg, var(--fire-1), var(--fire-2));
+      border-color: var(--fire-1);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(255, 106, 0, .3)
+    }
+
+    .search-bar {
+      display: flex;
+      gap: .6rem;
+      flex: 1;
+      max-width: 380px
+    }
+
+    .stock-alert {
+      font-size: .65rem;
+      font-weight: 700;
+      color: #ef4444;
+      background: rgba(239, 68, 68, .1);
+      border: 1px solid rgba(239, 68, 68, .2);
+      border-radius: 4px;
+      padding: .1rem .45rem;
+      text-transform: uppercase;
+      letter-spacing: .06em
+    }
+
+    .rank-badge {
+      position: absolute;
+      top: .6rem;
+      left: .6rem;
+      background: linear-gradient(135deg, var(--fire-1), var(--fire-2));
+      color: #fff;
+      font-family: var(--fd);
+      font-size: .65rem;
+      font-weight: 900;
+      padding: .2rem .5rem;
+      border-radius: 5px;
+      letter-spacing: .06em;
+      z-index: 1
+    }
+
+    /* ════════════════════════════════════════════
+       CATÁLOGO — Hero + filtro estilo "ACMAFER Glass Industrial"
+       Reutiliza los tokens de acmafer.css (--fire-1, --card, --border,
+       --text, --text-m, --dark-1/2) en vez de inventar una paleta nueva,
+       así el contraste queda garantizado en ambos temas.
+    ════════════════════════════════════════════ */
+
+    @keyframes catGlowPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+    @keyframes catBorderFlow { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+    .cat-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+      padding: 26px 30px;
+      background: linear-gradient(160deg, rgba(255, 106, 0, .06), var(--card));
+      border: 1px solid var(--card-b);
+      border-radius: var(--rl);
+      position: relative;
+      overflow: hidden;
+    }
+    .cat-hero::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--fire-1), var(--spark), var(--fire-1), transparent);
+      background-size: 200% 100%;
+      animation: catBorderFlow 4s linear infinite;
+    }
+    .cat-hero-eyebrow {
+      font-family: var(--fm);
+      font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--fire-1); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cat-hero-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--fire-1);
+      box-shadow: 0 0 8px var(--fire-1);
+      animation: catGlowPulse 1.6s ease-in-out infinite;
+    }
+    .cat-hero-title {
+      font-family: var(--fd);
+      font-size: clamp(20px, 3vw, 26px); font-weight: 900;
+      margin: 0; letter-spacing: .02em;
+      display: flex; align-items: center; gap: 12px;
+      color: var(--text);
+    }
+    .cat-hero-title i { color: var(--fire-1); }
+    .cat-hero-sub { font-family: var(--fb); font-size: 14px; color: var(--text-m); margin: 6px 0 0; }
+    .cat-hero-actions { flex-shrink: 0; }
+
+    .cat-filter-card {
+      background: var(--card);
+      border: 1px solid var(--card-b);
+      border-radius: var(--rl);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="particlesBg"></canvas>
+  <div th:replace="~{layout/navbar :: navbar}"></div>
+  <main class="acm-main" style="padding-top:80px">
+    <div class="container-fluid px-4 py-3">
+
+      <!-- ── Hero header ── -->
+      <div class="cat-hero">
+        <div>
+          <div class="cat-hero-eyebrow"><span class="dot"></span>// ACMAFER · CATÁLOGO INDUSTRIAL</div>
+          <h1 class="cat-hero-title"><i class="bi bi-grid-3x3-gap"></i> <span data-i18n="cat_title">Catálogo de Productos</span></h1>
+          <p class="cat-hero-sub"><span th:text="${totalProductos}">0</span> <span data-i18n="cat_found">productos encontrados</span></p>
+        </div>
+        <div class="cat-hero-actions" sec:authorize="hasRole('ADMINISTRADOR')">
+          <a th:href="@{/productos/nuevo}" class="acm-btn acm-btn-primary acm-btn-sm"><i class="bi bi-plus-lg"></i>
+            Nuevo</a>
+        </div>
+      </div>
+
+      <!-- ── Filtro ── -->
+      <div class="cat-filter-card">
+        <form method="get" th:action="@{/productos/catalogo}" class="filter-bar" style="margin-bottom:0">
+          <div class="search-bar">
+            <input type="text" name="q" class="acm-input" data-i18n-placeholder="cat_search_ph" placeholder="🔍 Buscar producto..." th:value="${q}"
+              style="padding:.5rem 1rem;font-size:.88rem">
+            <button type="submit" class="acm-btn acm-btn-primary acm-btn-sm" data-i18n="cat_search_btn">Buscar</button>
+          </div>
+          <select name="estado" class="acm-select" style="width:auto;padding:.5rem .9rem;font-size:.85rem"
+            onchange="this.form.submit()">
+            <option value="" data-i18n="cat_all_states">Todos los estados</option>
+            <option value="Disponible" th:selected="${estado=='Disponible'}">Disponible</option>
+            <option value="Agotado" th:selected="${estado=='Agotado'}">Agotado</option>
+            <option value="Descontinuado" th:selected="${estado=='Descontinuado'}">Descontinuado</option>
+          </select>
+          <select name="idCategoria" class="acm-select" style="width:auto;padding:.5rem .9rem;font-size:.85rem"
+            onchange="this.form.submit()">
+            <option value="">Todas las categorías</option>
+            <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nombre}"
+              th:selected="${idCategoria != null and idCategoria == cat.id}"></option>
+          </select>
+          <a th:href="@{/productos/catalogo}" class="acm-btn acm-btn-outline acm-btn-sm"><i class="bi bi-x-lg"></i> <span data-i18n="common_clear">Limpiar</span></a>
+        </form>
+      </div>
+
+      <div class="product-grid" th:if="${productos != null and !productos.empty}">
+        <div class="product-card reveal" th:each="p, iter : ${productos.content}" th:data-id="${p.id}"
+          th:data-nombre="${p.nombre}" th:data-codigo="${p.codigo}"
+          th:data-categoria="${p.categoria != null ? p.categoria.nombre : 'Sin categoría'}" th:data-estado="${p.estado}"
+          th:data-stock="${p.stockActual}"
+          th:data-precio="${p.precioUnitario != null ? p.precioUnitario.toPlainString() : ''}"
+          th:data-imagen="${p.rutaImagen}">
+          <span class="rank-badge" th:if="${iter.index < 3}">
+            <th:block th:text="${iter.index == 0 ? '🥇' : iter.index == 1 ? '🥈' : '🥉'}"></th:block> TOP
+          </span>
+          <div class="card-img">
+            <img th:if="${p.rutaImagen != null and !#strings.isEmpty(p.rutaImagen)}" th:src="${p.rutaImagen}"
+              th:alt="${p.nombre}" style="width: 100%; height: 100%; object-fit: cover;">
+            <div class="no-img" th:unless="${p.rutaImagen != null and !#strings.isEmpty(p.rutaImagen)}">
+              <span th:text="${p.stockActual > 50 ? '⚙' : p.stockActual > 10 ? '🔧' : '🏭'}">⚙</span>
+            </div>
+            <div class="card-shine"></div>
+          </div>
+          <div class="card-body-inner">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="card-category"
+                th:text="${p.categoria != null ? p.categoria.nombre : 'Sin categoría'}"></span>
+              <span th:class="|acm-status ${p.estado != null ? p.estado.toLowerCase() : ''}|"
+                th:text="${p.estado}"></span>
+            </div>
+            <div class="card-title" th:text="${p.nombre}">Producto</div>
+            <div class="card-code" th:text="${p.codigo}">COD-000</div>
+            <div class="d-flex align-items-center gap-2 my-1">
+              <small class="text-muted" style="font-size:.72rem">Stock: <strong
+                  th:text="${p.stockActual}">0</strong></small>
+              <span class="stock-alert" th:if="${p.tieneStockBajo()}">⚠ Bajo</span>
+            </div>
+            <div class="card-price">
+              <th:block th:if="${p.precioUnitario != null}">$<span
+                  th:text="${#numbers.formatDecimal(p.precioUnitario,1,'POINT',0,'COMMA')}"></span></th:block>
+              <span th:unless="${p.precioUnitario != null}">Consultar</span>
+            </div>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <a th:href="@{/productos/{id}(id=${p.id})}" class="btn-card-detail" data-i18n="cat_view">Ver detalle</a>
+              <button class="btn-card-cart" data-i18n-title="cat_add_cart" title="Agregar al pedido"
+                th:data-id="${p.id}"
+                th:data-nombre="${p.nombre}"
+                th:data-precio="${p.precioUnitario != null ? p.precioUnitario.toPlainString() : '0'}"
+                th:data-stock="${p.stockActual}"
+                onclick="event.stopPropagation(); var btn=this; var id=parseInt(btn.dataset.id); var nombre=btn.dataset.nombre; var precio=parseFloat(btn.dataset.precio)||0; var stock=parseInt(btn.dataset.stock)||0; if(window.agregarAlCarrito){ agregarAlCarrito(id, nombre, precio, stock); }">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div th:if="${productos == null or productos.empty}" class="text-center py-5" style="color:var(--text-m)">
+        <div style="font-size:3rem;opacity:.3">🏭</div>
+        <p class="mt-2" data-i18n="cat_no_results">No se encontraron productos con esos criterios.</p>
+        <a th:href="@{/productos/catalogo}" class="acm-btn acm-btn-outline acm-btn-sm mt-2" data-i18n="cat_view_all">Ver todos</a>
+      </div>
+
+      <div class="d-flex justify-content-center mt-4" th:if="${productos != null and productos.totalPages > 1}">
+        <nav>
+          <ul class="pagination acm-pagination">
+            <li class="page-item" th:classappend="${productos.first ? 'disabled' : ''}">
+              <a class="page-link"
+                th:href="@{/productos/catalogo(page=${productos.number-1},q=${q},estado=${estado},idCategoria=${idCategoria})}">«</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0,productos.totalPages-1)}"
+              th:classappend="${productos.number == i ? 'active' : ''}">
+              <a class="page-link"
+                th:href="@{/productos/catalogo(page=${i},q=${q},estado=${estado},idCategoria=${idCategoria})}"
+                th:text="${i+1}"></a>
+            </li>
+            <li class="page-item" th:classappend="${productos.last ? 'disabled' : ''}">
+              <a class="page-link"
+                th:href="@{/productos/catalogo(page=${productos.number+1},q=${q},estado=${estado},idCategoria=${idCategoria})}">»</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <div class="product-modal-overlay" id="productModal" onclick="if(event.target===this)closeProductModal()">
+      <div class="product-modal">
+        <button class="modal-close" onclick="closeProductModal()">✕</button>
+        <div class="modal-viewer">
+          <img id="modalProductImg" src="" alt=""
+            style="display:none;width:100%;height:100%;object-fit:cover;border-radius:inherit;">
+          <div class="modal-3d-icon" id="modal3dIcon">⚙</div>
+          <div class="modal-glow"></div>
+        </div>
+        <div class="modal-info">
+          <div class="modal-cat" id="modalCat"></div>
+          <div class="modal-title" id="modalTitle"></div>
+          <div class="modal-desc" id="modalDesc"></div>
+          <div class="modal-specs">
+            <div class="spec-item">
+              <div class="spec-label">Código</div>
+              <div class="spec-val" id="modalCode"></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Stock</div>
+              <div class="spec-val" id="modalStock"></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Estado</div>
+              <div class="spec-val" id="modalEstado"></div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Precio</div>
+              <div class="spec-val" id="modalPrice"></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-primary" id="modalCartBtn">🛒 <span data-i18n="cat_add_cart">Agregar al pedido</span></button>
+            <button class="btn-modal-sec" id="modalDetailBtn" data-i18n="cat_view">Ver detalle completo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer del carrito -->
+    <div th:replace="~{pedidos/drawer-carrito :: drawer}"></div>
+
+  </main>
+
+  <div th:replace="~{layout/navbar :: chatbot}"></div>
+  <div th:replace="~{layout/navbar :: cartNotif}"></div>
+  <footer th:replace="~{layout/navbar :: footer}"></footer>
+  <th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+</body>
+
+</html>

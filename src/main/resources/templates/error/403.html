@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><meta charset="UTF-8"/>
+<title><span data-i18n="err_403_title">Acceso denegado</span> — ACMAFER</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet"/>
+<link th:href="@{/css/acmafer.css}" rel="stylesheet"/>
+</head>
+<body>
+<canvas id="particlesBg"></canvas>
+<div th:replace="~{layout/navbar :: navbar}"></div>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;
+            justify-content:center;background:var(--acm-primary);text-align:center;padding:32px">
+    <div style="font-family:var(--font-display);font-size:120px;font-weight:800;
+                color:var(--acm-red);line-height:1">403</div>
+    <h2 style="color:#fff;font-family:var(--font-display);font-size:28px;margin:12px 0">
+        Acceso Denegado
+    </h2>
+    <p style="color:rgba(255,255,255,.55);max-width:400px;font-size:15px;line-height:1.6">
+        No tienes permisos para acceder a este módulo. Si crees que esto es un error, contacta al administrador.
+    </p>
+    <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+        <a th:href="@{/dashboard}" class="acm-btn acm-btn-primary">
+            <i class="bi bi-speedometer2"></i> Ir al dashboard
+        </a>
+        <a th:href="@{/}" class="acm-btn acm-btn-outline"
+           style="border-color:rgba(255,255,255,.3);color:#fff">
+            <i class="bi bi-house"></i> Inicio
+        </a>
+    </div>
+</div>
+<div th:replace="~{layout/navbar :: chatbot}"></div>
+<div th:replace="~{layout/navbar :: cartNotif}"></div>
+<footer th:replace="~{layout/navbar :: footer}"></footer>
+<th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+  <div class="lang-switcher-float" id="langSwitcher"></div>
+  <script src="/js/i18n.js"></script>
+</body>
+</html>

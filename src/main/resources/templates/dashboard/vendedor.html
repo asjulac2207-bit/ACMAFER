@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="acm-user-id" th:content="${currentUserId}" />
+    <meta name="_csrf"       th:content="${_csrf?.token}" />
+    <meta name="_csrf_param" th:content="${_csrf?.parameterName}" />
+    <title>Panel Vendedor — ACMAFER</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link th:href="@{/css/acmafer.css}" rel="stylesheet" />
+    <style>
+        /* KPI cards */
+        .vd-kpi {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.4rem 1.6rem 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .vd-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,.3); }
+        .vd-kpi-mini-chart { height: 48px; margin-top: .6rem; }
+        .vd-kpi .kpi-top  { display:flex; justify-content:space-between; align-items:flex-start; }
+        .vd-kpi .kpi-icon { font-size:1.5rem; width:42px; height:42px; border-radius:10px;
+                             display:flex; align-items:center; justify-content:center; }
+        .vd-kpi .kpi-val  { font-size:1.9rem; font-weight:900; font-family:var(--fd); line-height:1.1; margin-top:.5rem; }
+        .vd-kpi .kpi-lbl  { font-size:.75rem; color:var(--text-m); margin-top:.2rem;
+                             text-transform:uppercase; letter-spacing:.07em; }
+        .vd-kpi.orange .kpi-icon { background:rgba(255,106,0,.15); color:var(--fire-1); }
+        .vd-kpi.orange .kpi-val  { color:var(--fire-1); }
+        .vd-kpi.green  .kpi-icon { background:rgba(46,204,113,.15); color:#2ecc71; }
+        .vd-kpi.green  .kpi-val  { color:#2ecc71; }
+        .vd-kpi.yellow .kpi-icon { background:rgba(241,196,15,.15); color:#f1c40f; }
+        .vd-kpi.yellow .kpi-val  { color:#f1c40f; }
+        .vd-kpi.blue   .kpi-icon { background:rgba(52,152,219,.15); color:#3498db; }
+        .vd-kpi.blue   .kpi-val  { color:#3498db; }
+
+        /* Tabla */
+        .vd-table { width:100%; border-collapse:collapse; font-size:.83rem; }
+        .vd-table th { padding:.55rem 1rem; color:var(--text-m); font-weight:600;
+                        font-size:.72rem; text-transform:uppercase; letter-spacing:.07em;
+                        border-bottom:1px solid var(--border); }
+        .vd-table td { padding:.7rem 1rem; border-bottom:1px solid rgba(255,255,255,.04);
+                        vertical-align:middle; }
+        .vd-table tr:hover td { background:rgba(255,255,255,.025); }
+        .vd-table tr:last-child td { border-bottom:none; }
+
+        /* Top productos */
+        .top-prod { display:flex; align-items:center; gap:.8rem; padding:.65rem .8rem;
+                    border-radius:10px; transition:background .15s; }
+        .top-prod:hover { background:rgba(255,255,255,.04); }
+        .top-prod-rank { width:30px; height:30px; border-radius:8px; display:flex;
+                          align-items:center; justify-content:center;
+                          font-weight:900; font-size:.78rem; font-family:var(--fd); flex-shrink:0; }
+        .r1 { background:linear-gradient(135deg,#f1c40f,#e67e22); color:#000; }
+        .r2 { background:linear-gradient(135deg,#bdc3c7,#7f8c8d); color:#000; }
+        .r3 { background:linear-gradient(135deg,#cd7f32,#8e4a00); color:#fff; }
+        .rn { background:var(--border); color:var(--text-m); }
+        .top-prod-name { font-weight:700; font-size:.83rem; white-space:nowrap;
+                          overflow:hidden; text-overflow:ellipsis; max-width:160px; }
+        .top-prod-cat  { font-size:.7rem; color:var(--text-m); }
+        .top-prod-qty  { margin-left:auto; font-weight:900; font-size:1rem;
+                          color:var(--fire-1); font-family:var(--fd); white-space:nowrap; }
+
+        /* Estado badges */
+        .est { display:inline-block; padding:.18rem .55rem; border-radius:50px;
+                font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+        .est-Pendiente  { background:rgba(241,196,15,.15); color:#f1c40f; }
+        .est-Procesando { background:rgba(255,106,0,.15);  color:var(--fire-1); }
+        .est-Enviado    { background:rgba(52,152,219,.15); color:#3498db; }
+        .est-Entregado  { background:rgba(46,204,113,.15); color:#2ecc71; }
+        .est-Cancelado  { background:rgba(231,76,60,.15);  color:#e74c3c; }
+    </style>
+</head>
+
+<body>
+<canvas id="particlesBg"></canvas>
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="acm-main" style="padding-top:80px">
+<div class="container-fluid px-4 py-3">
+
+    <!-- Header -->
+    <div class="acm-page-header rounded-3 mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h1 class="acm-page-title"><i class="bi bi-graph-up-arrow me-2"></i>Panel de Ventas</h1>
+                <p class="acm-page-sub">
+                    Bienvenido, <strong sec:authentication="principal.nombre">Vendedor</strong>
+                    — Gestiona pedidos y clientes
+                </p>
+            </div>
+            <div style="font-size:12px;color:var(--text-m)">
+                <i class="bi bi-clock me-1"></i><span id="reloj"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs con mini sparkline -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="vd-kpi yellow">
+                <div class="kpi-top">
+                    <div>
+                        <div class="kpi-val" th:text="${kpis.pedidosPendientes}">0</div>
+                        <div class="kpi-lbl">Pedidos pendientes</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+                </div>
+                <canvas class="vd-kpi-mini-chart" id="sparkPendientes"></canvas>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="vd-kpi orange">
+                <div class="kpi-top">
+                    <div>
+                        <div class="kpi-val" th:text="${kpis.pedidosProcesando}">0</div>
+                        <div class="kpi-lbl">En proceso</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-arrow-repeat"></i></div>
+                </div>
+                <canvas class="vd-kpi-mini-chart" id="sparkProcesando"></canvas>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="vd-kpi green">
+                <div class="kpi-top">
+                    <div>
+                        <div class="kpi-val" th:text="${kpis.pedidosEntregados}">0</div>
+                        <div class="kpi-lbl">Entregados</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-bag-check"></i></div>
+                </div>
+                <canvas class="vd-kpi-mini-chart" id="sparkEntregados"></canvas>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="vd-kpi blue">
+                <div class="kpi-top">
+                    <div>
+                        <div class="kpi-val" style="font-size:1.25rem"
+                             th:text="${'$' + #numbers.formatInteger(kpis.totalVentas, 1, 'COMMA')}">$0</div>
+                        <div class="kpi-lbl">Total ventas</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+                </div>
+                <canvas class="vd-kpi-mini-chart" id="sparkVentas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfica de área principal (ventas + pedidos por mes) -->
+    <div class="acm-card mb-4">
+        <div class="acm-card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-activity me-1"></i> Evolución de ventas y pedidos — <span th:text="${#dates.year(#dates.createNow())}">2026</span></span>
+            <div style="display:flex;gap:1rem;font-size:.75rem;color:var(--text-m)">
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF6A00;margin-right:4px"></span>Ventas</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3498db;margin-right:4px"></span>Pedidos</span>
+            </div>
+        </div>
+        <div class="acm-card-body" style="padding:.75rem 1.2rem 1rem">
+            <canvas id="chartArea" height="70"></canvas>
+        </div>
+    </div>
+
+    <!-- Tabla + Top productos -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+            <div class="acm-card h-100">
+                <div class="acm-card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-1"></i> Últimos pedidos</span>
+                    <a th:href="@{/pedidos/todos}" style="font-size:.77rem;color:var(--fire-1);text-decoration:none;font-weight:600">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="acm-card-body p-0">
+                    <table class="vd-table">
+                        <thead>
+                            <tr>
+                                <th>N° Pedido</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${ultimosPedidos}">
+                                <td style="font-family:var(--fm);font-size:.78rem;color:var(--fire-1)"
+                                    th:text="${p.numeroPedido}">ACM-001</td>
+                                <td th:text="${p.usuario != null ? p.usuario.nombreCompleto : 'N/A'}">Cliente</td>
+                                <td style="font-weight:700"
+                                    th:text="${'$' + #numbers.formatInteger(p.total, 1, 'COMMA')}">$0</td>
+                                <td>
+                                    <span class="est"
+                                          th:classappend="${'est-' + p.estado}"
+                                          th:text="${p.estado}">Estado</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/pedidos/{id}(id=${p.id})}"
+                                       style="color:var(--text-m)"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(ultimosPedidos)}">
+                                <td colspan="5" class="text-center py-4" style="color:var(--text-m)">
+                                    <i class="bi bi-inbox me-2"></i>No hay pedidos recientes
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="acm-card h-100">
+                <div class="acm-card-header">
+                    <i class="bi bi-trophy-fill me-1" style="color:#f1c40f"></i> Productos más vendidos
+                </div>
+                <div class="acm-card-body" style="padding:.6rem .8rem">
+                    <div th:each="p, iter : ${kpis.topProductos}" class="top-prod">
+                        <div class="top-prod-rank"
+                             th:classappend="${iter.index==0?'r1':iter.index==1?'r2':iter.index==2?'r3':'rn'}"
+                             th:text="${iter.index+1}">#</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="top-prod-name" th:text="${p.nombre}">Producto</div>
+                            <div class="top-prod-cat"
+                                 th:text="${p.categoria != null ? p.categoria.nombre : 'Sin categoría'}">Cat</div>
+                        </div>
+                        <div class="top-prod-qty" th:text="${p.ventasTotales + ' uds'}">0</div>
+                    </div>
+                    <div th:if="${kpis.topProductos == null or #lists.isEmpty(kpis.topProductos)}"
+                         class="text-center py-4" style="color:var(--text-m)">
+                        <i class="bi bi-inbox me-2"></i>Sin datos aún
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="acm-card mb-4">
+        <div class="acm-card-header"><i class="bi bi-lightning-fill me-1"></i> Acciones rápidas</div>
+        <div class="acm-card-body d-flex flex-wrap gap-2">
+            <a th:href="@{/pedidos/todos}" class="acm-btn acm-btn-primary">
+                <i class="bi bi-list-ul"></i> Todos los pedidos
+            </a>
+            <a th:href="@{/productos/catalogo}" class="acm-btn acm-btn-outline">
+                <i class="bi bi-grid-3x3-gap"></i> Ver catálogo
+            </a>
+            <a th:href="@{/notificaciones}" class="acm-btn acm-btn-outline">
+                <i class="bi bi-bell"></i> Notificaciones
+            </a>
+            <a th:href="@{/perfil}" class="acm-btn acm-btn-outline">
+                <i class="bi bi-person-circle"></i> Mi perfil
+            </a>
+        </div>
+    </div>
+
+</div>
+</main>
+
+<div th:replace="~{pedidos/drawer-carrito :: drawer}"></div>
+<div th:replace="~{layout/navbar :: chatbot}"></div>
+<div th:replace="~{layout/navbar :: cartNotif}"></div>
+<footer th:replace="~{layout/navbar :: footer}"></footer>
+<th:block th:replace="~{layout/navbar :: scripts}"></th:block>
+
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Datos del servidor ──────────────────────────────────────
+    const ventasMes   = /*[[${ventasMensuales}]]*/ [0,0,0,0,0,0,0,0,0,0,0,0];
+    const pedidosMes  = /*[[${pedidosMensuales}]]*/ [0,0,0,0,0,0,0,0,0,0,0,0];
+    const labels      = /*[[${mesesLabels}]]*/ ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const pendientes  = /*[[${kpis.pedidosPendientes}]]*/ 0;
+    const procesando  = /*[[${kpis.pedidosProcesando}]]*/ 0;
+    const entregados  = /*[[${kpis.pedidosEntregados}]]*/ 0;
+
+    // Reloj
+    function tick() { document.getElementById('reloj').textContent = new Date().toLocaleString('es-CO'); }
+    tick(); setInterval(tick, 1000);
+
+    // ── Paleta ─────────────────────────────────────────────────
+    const ORANGE = '#FF6A00';
+    const BLUE   = '#3498db';
+    const GREEN  = '#2ecc71';
+    const YELLOW = '#f1c40f';
+    const GRID   = 'rgba(255,255,255,.05)';
+    const TEXT   = 'rgba(255,255,255,.45)';
+
+    function gradiente(ctx, color) {
+        const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        g.addColorStop(0, color.replace(')', ',.35)').replace('rgb', 'rgba'));
+        g.addColorStop(1, color.replace(')', ',0)').replace('rgb', 'rgba'));
+        return g;
+    }
+
+    function gradHex(ctx, hex) {
+        const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        g.addColorStop(0, hex + '55');
+        g.addColorStop(1, hex + '00');
+        return g;
+    }
+
+    // ── Gráfica de área principal ───────────────────────────────
+    const ctxArea = document.getElementById('chartArea').getContext('2d');
+    new Chart(ctxArea, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Ventas ($)',
+                    data: ventasMes,
+                    borderColor: ORANGE,
+                    borderWidth: 2.5,
+                    backgroundColor: gradHex(ctxArea, ORANGE),
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 4,
+                    pointBackgroundColor: ORANGE,
+                    pointBorderColor: '#0a0a14',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7
+                },
+                {
+                    label: 'Pedidos',
+                    data: pedidosMes,
+                    borderColor: BLUE,
+                    borderWidth: 2.5,
+                    backgroundColor: gradHex(ctxArea, BLUE),
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 4,
+                    pointBackgroundColor: BLUE,
+                    pointBorderColor: '#0a0a14',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7,
+                    yAxisID: 'y2'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(8,8,20,.92)',
+                    borderColor: ORANGE,
+                    borderWidth: 1,
+                    padding: 12,
+                    titleColor: '#fff',
+                    bodyColor: TEXT,
+                    callbacks: {
+                        label: ctx => ctx.datasetIndex === 0
+                            ? ' Ventas: $' + ctx.parsed.y.toLocaleString('es-CO')
+                            : ' Pedidos: ' + ctx.parsed.y
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: GRID },
+                    ticks: { color: TEXT, font: { size: 11 } }
+                },
+                y: {
+                    position: 'left',
+                    grid: { color: GRID },
+                    ticks: {
+                        color: ORANGE,
+                        font: { size: 10 },
+                        callback: v => '$' + (v >= 1000000
+                            ? (v/1000000).toFixed(1)+'M'
+                            : v >= 1000 ? (v/1000).toFixed(0)+'K' : v)
+                    }
+                },
+                y2: {
+                    position: 'right',
+                    grid: { display: false },
+                    ticks: { color: BLUE, font: { size: 10 }, precision: 0 }
+                }
+            }
+        }
+    });
+
+    // ── Mini sparklines en los KPIs ─────────────────────────────
+    function sparkline(id, data, color) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const ctx = el.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data,
+                    borderColor: color,
+                    borderWidth: 1.8,
+                    backgroundColor: gradHex(ctx, color),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } },
+                animation: { duration: 800 }
+            }
+        });
+    }
+
+    sparkline('sparkVentas',     ventasMes,  BLUE);
+    sparkline('sparkEntregados', pedidosMes, GREEN);
+
+    // Sparklines estáticos para pendientes/procesando
+    sparkline('sparkPendientes',
+        [pendientes,pendientes,pendientes,pendientes,pendientes,pendientes,
+         pendientes,pendientes,pendientes,pendientes,pendientes,pendientes], YELLOW);
+    sparkline('sparkProcesando',
+        [procesando,procesando,procesando,procesando,procesando,procesando,
+         procesando,procesando,procesando,procesando,procesando,procesando], ORANGE);
+});
+</script>
+</body>
+</html>
