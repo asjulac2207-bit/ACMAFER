@@ -577,7 +577,7 @@
                         <div class="dt-avatar" th:text="${c.autor.iniciales}">??</div>
                         <div style="flex:1;min-width:0">
                             <div>
-                                <span class="dt-comment-author" th:text="${c.autor.nombreCompleto()}">Autor</span>
+                                <span th:text="${c.autor.nombre} + ' ' + ${c.autor.apellido}">Autor</span>
                                 <span class="dt-comment-time"
                                       th:text="${#temporals.format(c.fechaComentario,'dd/MM HH:mm')}"></span>
                             </div>
